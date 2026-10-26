@@ -79,4 +79,3 @@ spec:
     - effect: NoSchedule
       key: node.kubernetes.io/unreachable
       operator: Exists
-

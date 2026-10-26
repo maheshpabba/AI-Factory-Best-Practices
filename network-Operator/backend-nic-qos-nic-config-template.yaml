@@ -24,9 +24,10 @@ spec:
       - '0000:ed:00.0'
       - '0000:ed:00.1'
   nodeSelector:
-    node-role.kubernetes.io/gpuworker880: ''
+    kubernetes.io/hostname: worker3
   resetToDefault: false
   template:
+    force: false
     gpuDirectOptimized:
       enabled: true
       env: Baremetal
@@ -35,6 +36,11 @@ spec:
     pciPerformanceOptimized:
       enabled: true
       maxReadRequest: 4096
+    rawNvConfig:
+      - name: CNP_DSCP_P1
+        value: '48'
+      - name: CNP_DSCP_P2
+        value: '48'
     roceOptimized:
       enabled: true
       qos:

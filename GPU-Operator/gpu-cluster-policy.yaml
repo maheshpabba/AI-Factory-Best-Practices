@@ -93,4 +93,3 @@ spec:
   toolkit:
     enabled: true
     installDir: /usr/local/nvidia
-
