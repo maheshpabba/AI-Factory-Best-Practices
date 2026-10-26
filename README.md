@@ -19,7 +19,7 @@ The sections below mirror that document's table of contents, with each one linki
 
 Three logical network planes per GPU worker node: a frontend/primary CNI plane (OpenShift SDN, node management), an East/West compute (scale-out) RDMA fabric for NCCL collectives across nodes, and an isolated storage/backend fabric. Before installing with the Assisted Installer, gather every node's hostname, MAC address, static IP/subnet/gateway, plus cluster DNS/NTP/VIPs, and convert that table to NMState YAML for a repeatable, unattended install.
 
-After cluster install: label GPU worker nodes into their own role, then inventory each node's RDMA interfaces and PCIe addresses. [Scripts/cluster-utility.sh](Scripts/cluster-utility.sh) and [Scripts/cluster-utility.ps1](Scripts/cluster-utility.ps1) automate that inventory step — discover nodes by name or role, print RDMA device/PCIe/interface tables filtered by adapter family (ConnectX-7, ConnectX-8, BlueField), and generate `NodeNetworkConfigurationPolicy` (NNCP) YAML directly from what they find.
+After cluster install: label GPU worker nodes into their own role, then inventory each node's RDMA interfaces and PCIe addresses. [Scripts/cluster-utility.sh](Scripts/cluster-utility.sh) and [Scripts/cluster-utility.ps1](Scripts/cluster-utility.ps1) automate that inventory step — discover nodes by name or role, print RDMA device/PCIe/interface tables filtered by adapter family (ConnectX-7, ConnectX-8, BlueField), and generate `NodeNetworkConfigurationPolicy` (NNCP) YAML directly from what they find. See [Scripts/cluster-utility.md](Scripts/cluster-utility.md) for the full flag reference and examples for both variants.
 
 ## 2. Node Network Configuration
 
@@ -71,7 +71,7 @@ Validated two ways: hand-written Kubeflow `MPIJob`/`TrainJob` manifests (full co
 | --- | --- |
 | [nccl-training-tests/](nccl-training-tests/) | Hand-written `MPIJob`/`TrainJob` NCCL and training manifests, plus the RDMA QoS pods |
 | [nvcre-workloadruns/](nvcre-workloadruns/) | `nvcrectl`-driven `WorkloadRun`/`Certification` manifests and recorded results |
-| [Scripts/cluster-utility.sh](Scripts/cluster-utility.sh) | `-T prepare/status/cleanup` sets up the mutating admission webhook `nvcrectl` test pods need for privileged/macvlan access |
+| [Scripts/cluster-utility.sh](Scripts/cluster-utility.sh) / [Scripts/cluster-utility.md](Scripts/cluster-utility.md) | `-T prepare/status/cleanup` sets up the mutating admission webhook `nvcrectl` test pods need for privileged/macvlan access — see the linked guide for full usage |
 | [Misc/nccltestviacmdline](Misc/nccltestviacmdline) | One-off `oc run` NCCL test commands |
 
 See [docs/mpirun-torchrun-test-procedure.md](docs/mpirun-torchrun-test-procedure.md) and [docs/NVCRE-ScaleOut-Certification-MOP.md](docs/NVCRE-ScaleOut-Certification-MOP.md) for the full step-by-step procedures (local to this workspace; excluded from Git — see below).
