@@ -1,0 +1,156 @@
+apiVersion: kubeflow.org/v2beta1
+kind: MPIJob
+metadata:
+  name: nccl-reducescatter-2node
+  namespace: default
+spec:
+  slotsPerWorker: 8
+  runPolicy:
+    cleanPodPolicy: Running
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          containers:
+            - name: launcher
+              image: nvcr.io/nvidia/pytorch:26.01-py3
+              command: ["mpirun"]
+              args:
+                - --allow-run-as-root
+                - -np
+                - "16"
+                - --map-by
+                - ppr:8:node
+                - --bind-to
+                - none
+                - --mca
+                - plm_rsh_args
+                - -o StrictHostKeyChecking=no -o ConnectionAttempts=10
+                # Forces ORTE's own out-of-band control channel (orted <-> mpirun) onto
+                # plain TCP instead of UCX -- confirmed this specific channel (not NCCL's
+                # own transport) is what stalls on a bcopy size limit using mlx5_2.
+                - --mca
+                - oob
+                - ^ucx
+                # NVLS transport init fails hard without this (transport/nvls.cc:427 -> 1,
+                # unhandled CUDA error) -- confirmed required on this cluster, not optional.
+                # - -x
+                # - NCCL_NVLS_ENABLE=0
+                - -x
+                - NCCL_PXN_DISABLE=0
+                - -x
+                - NCCL_IB_GID_INDEX=5
+                - -x
+                - NCCL_IB_DISABLE=0
+                # Aligning with NVCRE's own auto-injected defaults for cross-node jobs
+                # (GPUDirect RDMA routing + chunk size), confirmed via earlier pod-spec
+                # inspection of nvcrectl-generated WorkloadRun launcher pods.
+                - -x
+                - NCCL_DEBUG=INFO
+                - -x
+                - NCCL_CUMEM_ENABLE=1
+                - -x
+                - NCCL_NET_GDR_C2C=1
+                - -x
+                - NCCL_NET_GDR_LEVEL=PHB
+                - -x
+                - NCCL_P2P_NET_CHUNKSIZE=2097152
+                - -x
+                - NCCL_SHM_DISABLE=1
+                - -x
+                - NCCL_MNNVL_ENABLE=0
+                # NCCL_IB_HCA and NCCL_SOCKET_IFNAME confirmed unnecessary -- NCCL/UCX
+                # auto-discovery (constrained only via UCX_NET_DEVICES) matched
+                # performance exactly with both set and unset in the all_reduce test.
+                - -x
+                - UCX_NET_DEVICES=mlx5_0:1,mlx5_1:1,mlx5_6:1,mlx5_7:1,mlx5_10:1,mlx5_11:1,mlx5_12:1,mlx5_13:1,mlx5_14:1,mlx5_15:1,mlx5_16:1,mlx5_17:1,mlx5_20:1,mlx5_21:1,mlx5_22:1,mlx5_23:1
+                # nvcr.io/nvidia/pytorch ships the MPI-aware build under this full path,
+                # not on PATH -- matches the convention used elsewhere on this cluster.
+                - /usr/local/bin/reduce_scatter_perf_mpi
+                - -b
+                - "8"
+                - -e
+                - 16G
+                - -f
+                - "2"
+                - -g
+                - "1"
+                - -n
+                - "100"
+                - -w
+                - "5"
+    Worker:
+      replicas: 2
+      template:
+        metadata:
+          annotations:
+            # All 16 RDMA-capable macvlan NICs on this cluster (confirmed via
+            # `oc get network-attachment-definitions -n default`), not SR-IOV --
+            # this cluster uses the shared-device-plugin (rdma/rdmashared) model.
+            k8s.v1.cni.cncf.io/networks: '[{"name": "be-mac-vlan-network-eno6np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno7np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno8np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno9np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno10np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno11np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno12np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-eno13np0", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens1f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens2f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens4f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens5f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens6f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens7f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens9f1np1", "namespace": "default"},
+              {"name": "be-mac-vlan-network-ens10f1np1", "namespace": "default"}]'
+        spec:
+          # Package install must happen in the SAME container that execs sshd --
+          # init containers don't share a filesystem with sibling containers, so an
+          # apt-get install here never persisted into the main "worker" container.
+          containers:
+            - name: worker
+              image: nvcr.io/nvidia/pytorch:26.01-py3
+              command: ["bash", "-c"]
+              args:
+                # Fix ARP/RPF for multiple RoCE NICs on one subnet (prevents NCCL/UCX
+                # QP retry-exceeded / UD endpoint timeout) -- same fix proven to work in
+                # the nemotron-w3w4-1m training job's train.sh, applied at pod level since
+                # host-level MachineConfig sysctls don't propagate into pod network
+                # namespaces for macvlan sub-interfaces.
+                - |
+                  for d in /proc/sys/net/ipv4/conf/*/; do
+                    echo 1 > "${d}arp_ignore" 2>/dev/null || true
+                    echo 2 > "${d}arp_announce" 2>/dev/null || true
+                    echo 0 > "${d}rp_filter" 2>/dev/null || true
+                  done
+                  apt-get update && apt-get install -y openssh-server && mkdir -p /run/sshd && echo "StrictModes no" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -De
+              env:
+                - name: http_proxy
+                  value: "http://173.36.224.108:80/"
+                - name: https_proxy
+                  value: "http://173.36.224.108:80/"
+                - name: no_proxy
+                  value: ".cluster.local,.svc,10.128.0.0/14,127.0.0.1,localhost"
+              securityContext:
+                # privileged: true (not just NET_ADMIN) -- CRI-O masks /proc/sys/net/* as
+                # read-only for non-privileged containers regardless of capabilities;
+                # confirmed via direct write test. This is what nemotron-w3w4-1m's job
+                # actually relied on for its ARP/RPF sysctl writes to succeed.
+                privileged: true
+              resources:
+                limits:
+                  nvidia.com/gpu: "8"
+                  # rdma/rdmashared is a ticket-based access resource (not a per-device
+                  # count) on this cluster -- actual HCA visibility to the 16 NICs above
+                  # comes from the macvlan attachments, independent of this quantity.
+                  rdma/rdmashared: "8"
+              volumeMounts:
+                - name: dshm
+                  mountPath: /dev/shm
+          volumes:
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 64Gi

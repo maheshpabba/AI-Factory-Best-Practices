@@ -1,0 +1,242 @@
+# WorkloadRun: Nemotron 5 (56B) Megatron-LM training smoke test.
+# Equivalent to Certification category training/nemotron5-56b.
+#
+# Train.sh content below is copied verbatim from NVIDIA's own official guide:
+#   https://docs.nvidia.com/cluster-readiness-engine/how-to-guides/workloadrun-nemotron5/
+# (confirmed, not inferred) -- adapted here only for this cluster's single
+# node / proxy requirements.
+#
+# NOTE ON SCALE: the official guide targets a 16-node cluster (numNodes: 16).
+# This cluster has only 1 GPU-equipped node (worker3, 8x B300) today, so
+# numNodes/gpusPerNode are set to 1/8. TP=4 is the doc's own default for
+# GB200/GB300; our GPUs are standalone B300, not the Grace-Blackwell
+# "gb300" superchip, so this may need tuning (see TENSOR_PARALLELISM env
+# below) -- verify memory fits before trusting throughput numbers.
+#
+# Run:
+#   nvcrectl workloadrun run --workload-registry nvcr.io \
+#     --workload-registry-username '$oauthtoken' --workload-registry-password "$NGC_API_KEY" \
+#     --wait nemotron5-56b.yaml
+# Report:
+#   nvcrectl workloadrun report nemotron5-56b
+apiVersion: nvcre.nvidia.com/v1alpha1
+kind: WorkloadRun
+metadata:
+  name: nemotron5-56b
+spec:
+  image: nvcr.io/nvidia/pytorch:25.08-py3
+  framework:
+    exec:
+      command: ["/bin/bash", "/config/train.sh"]
+  numNodes: 1
+  gpusPerNode: 8
+  resources:
+    limits:
+      nvidia.com/gpu: "8"
+      memory: 800Gi
+      cpu: "128"
+    requests:
+      nvidia.com/gpu: "8"
+      memory: 500Gi
+      cpu: "64"
+  initContainers:
+    - name: megatron-clone
+      image: nvcr.io/nvidia/pytorch:25.08-py3
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          set -ex
+          if [ ! -d "/mnt/workspace/megatron-lm/.git" ]; then
+            git clone --depth 1 -b core_v0.15.2 \
+              https://github.com/NVIDIA/Megatron-LM.git /mnt/workspace/megatron-lm
+          fi
+          echo "Megatron-LM cloned successfully"
+      env:
+        - name: HTTP_PROXY
+          value: "http://173.36.224.108:80/"
+        - name: HTTPS_PROXY
+          value: "http://173.36.224.108:80/"
+        - name: NO_PROXY
+          value: ".cluster.local,.lgsgpu.cisco.lab,.svc,10.128.0.0/14,10.20.66.0/24,127.0.0.1,172.17.26.0/23,172.30.0.0/16,api-int.lgsgpu.cisco.lab,localhost"
+        - name: http_proxy
+          value: "http://173.36.224.108:80/"
+        - name: https_proxy
+          value: "http://173.36.224.108:80/"
+        - name: no_proxy
+          value: ".cluster.local,.lgsgpu.cisco.lab,.svc,10.128.0.0/14,10.20.66.0/24,127.0.0.1,172.17.26.0/23,172.30.0.0/16,api-int.lgsgpu.cisco.lab,localhost"
+      volumeMounts:
+        - mountPath: /mnt/workspace
+          name: workspace
+  volumes:
+    - name: workspace
+      emptyDir:
+        medium: Memory
+  volumeMounts:
+    - mountPath: /mnt/workspace
+      name: workspace
+  config:
+    inline:
+      train.sh: |
+        #!/bin/bash
+        set -e
+
+        WORKSPACE_DIR=${WORKSPACE_DIR:-/mnt/workspace}
+        MEGATRON_PATH=${MEGATRON_PATH:-${WORKSPACE_DIR}/megatron-lm}
+        CHECKPOINT_DIR=${CHECKPOINT_DIR:-${WORKSPACE_DIR}/checkpoints}
+        TENSORBOARD_DIR=${TENSORBOARD_DIR:-${WORKSPACE_DIR}/tensorboard}
+        mkdir -p ${CHECKPOINT_DIR} ${TENSORBOARD_DIR}
+
+        if ! ls ${MEGATRON_PATH}/megatron/core/datasets/helpers_cpp*.so 1>/dev/null 2>&1; then
+          echo "Building Megatron helpers_cpp..."
+          cd ${MEGATRON_PATH}
+          pip install -e . --no-deps --no-build-isolation 2>&1 | tail -5
+          cd ${WORKSPACE_DIR}
+        fi
+
+        CHECKPOINT_ARGS=""
+        DATA_CACHE_ARGS=""
+        if [ "$ENABLE_CHECKPOINT" = "true" ]; then
+          CHECKPOINT_ARGS="--save ${CHECKPOINT_DIR}"
+          if [ -d "${CHECKPOINT_DIR}" ] && [ "$(ls -A ${CHECKPOINT_DIR} 2>/dev/null)" ]; then
+            CHECKPOINT_ARGS="${CHECKPOINT_ARGS} --load ${CHECKPOINT_DIR}"
+          fi
+          DATA_CACHE_ARGS="--data-cache-path ${WORKSPACE_DIR}/data_cache"
+          mkdir -p ${WORKSPACE_DIR}/data_cache
+        fi
+
+        TOTAL_GPUS=$((PET_NNODES * PET_NPROC_PER_NODE))
+        TP=${TENSOR_PARALLELISM:-4}
+        PP=${PIPELINE_PARALLELISM:-1}
+        MBS=${MICRO_BATCH_SIZE:-1}
+        GBS=${GLOBAL_BATCH_SIZE:-$TOTAL_GPUS}
+
+        echo "TOTAL_GPUS=${TOTAL_GPUS} GBS=${GBS} MBS=${MBS} TP=${TP} PP=${PP}"
+
+        exec torchrun \
+          --nnodes $PET_NNODES \
+          --nproc-per-node $PET_NPROC_PER_NODE \
+          ${MEGATRON_PATH}/pretrain_gpt.py \
+          --attention-backend flash \
+          --distributed-timeout-minutes 230 \
+          --use-mcore-models \
+          --no-mmap-bin-files \
+          --sequence-parallel \
+          --untie-embeddings-and-output-weights \
+          --disable-bias-linear \
+          --init-method-std 0.014 \
+          --position-embedding-type rope \
+          --rotary-base 1000000 \
+          --rotary-percent 1.0 \
+          --squared-relu \
+          --group-query-attention \
+          --kv-channels 128 \
+          --normalization RMSNorm \
+          --attention-dropout 0.0 \
+          --hidden-dropout 0.0 \
+          --exit-duration-in-mins 30 \
+          --train-iters 50 \
+          --lr-decay-iters 1830030 \
+          --lr 6e-4 \
+          --min-lr 6e-6 \
+          --weight-decay 0.1 \
+          --clip-grad 1.0 \
+          --lr-decay-style cosine \
+          --lr-warmup-iters 5 \
+          --eval-iters 1 \
+          --eval-interval 50 \
+          --log-interval 10 \
+          --tokenizer-type NullTokenizer \
+          --vocab-size 131072 \
+          --mock-data \
+          --num-workers 1 \
+          --no-create-attention-mask-in-dataloader \
+          --log-progress \
+          --timing-log-option minmax \
+          --log-params-norm \
+          --log-num-zeros-in-grad \
+          --log-throughput \
+          --bf16 \
+          --adam-beta1 0.9 \
+          --adam-beta2 0.95 \
+          --use-distributed-optimizer \
+          --overlap-grad-reduce \
+          --overlap-param-gather \
+          --manual-gc \
+          --log-straggler \
+          --disable-straggler-on-startup \
+          --straggler-minmax-count 16 \
+          --check-weight-hash-across-dp-replicas-interval 20000 \
+          --ckpt-fully-parallel-save \
+          --ckpt-fully-parallel-load \
+          --async-save \
+          --ckpt-assume-constant-structure \
+          --ckpt-format torch_dist \
+          --num-layers 79 \
+          --hidden-size 8192 \
+          --ffn-hidden-size 32768 \
+          --num-attention-heads 64 \
+          --seq-length 8192 \
+          --max-position-embeddings 8192 \
+          --num-query-groups 8 \
+          --tensor-model-parallel-size $TP \
+          --pipeline-model-parallel-size $PP \
+          --micro-batch-size $MBS \
+          --global-batch-size $GBS \
+          $CHECKPOINT_ARGS \
+          $DATA_CACHE_ARGS \
+          --save-interval ${SAVE_INTERVAL:-250} \
+          --save-retain-interval ${SAVE_RETAIN_INTERVAL:-1000} \
+          --tensorboard-dir ${TENSORBOARD_DIR}
+  env:
+    - name: NVTE_FWD_LAYERNORM_SM_MARGIN
+      value: "16"
+    - name: NVTE_BWD_LAYERNORM_SM_MARGIN
+      value: "16"
+    - name: NVTE_FUSED_ATTN
+      value: "0"
+    - name: TORCHINDUCTOR_WORKER_START
+      value: fork
+    - name: CUDA_DEVICE_MAX_CONNECTIONS
+      value: "1"
+    - name: TORCH_NCCL_AVOID_RECORD_STREAMS
+      value: "1"
+    - name: TORCH_NCCL_HIGH_PRIORITY
+      value: "1"
+    - name: UCX_MEM_MMAP_HOOK_MODE
+      value: none
+    - name: UCX_MEM_CUDA_HOOK_MODE
+      value: none
+    - name: UCX_MEM_MALLOC_HOOKS
+      value: "n"
+    - name: UCX_ERROR_SIGNALS
+      value: ""
+    - name: EXIT_DURATION_MINS
+      value: "30"
+    - name: ENABLE_CHECKPOINT
+      value: "false"
+    - name: TRAIN_ITERS
+      value: "50"
+    - name: SAVE_INTERVAL
+      value: "250"
+    - name: SAVE_RETAIN_INTERVAL
+      value: "1000"
+    - name: PYTHONPATH
+      value: /mnt/workspace/megatron-lm
+    - name: HTTP_PROXY
+      value: "http://173.36.224.108:80/"
+    - name: HTTPS_PROXY
+      value: "http://173.36.224.108:80/"
+    - name: NO_PROXY
+      value: ".cluster.local,.lgsgpu.cisco.lab,.svc,10.128.0.0/14,10.20.66.0/24,127.0.0.1,172.17.26.0/23,172.30.0.0/16,api-int.lgsgpu.cisco.lab,localhost"
+    - name: http_proxy
+      value: "http://173.36.224.108:80/"
+    - name: https_proxy
+      value: "http://173.36.224.108:80/"
+    - name: no_proxy
+      value: ".cluster.local,.lgsgpu.cisco.lab,.svc,10.128.0.0/14,10.20.66.0/24,127.0.0.1,172.17.26.0/23,172.30.0.0/16,api-int.lgsgpu.cisco.lab,localhost"
+  target:
+    nodeSelector:
+      nvidia.com/gpu.present: "true"
+  goodputMeasurement:
+    logProfileRef: megatron-training
+    sampleInterval: 10s

@@ -1,0 +1,52 @@
+# WorkloadRun: NCCL AllReduce bandwidth test.
+# Mirrors the baseline SLURM srun run:
+#   srun --export=ALL,PMIX_MCA_gds=hash,UCX_NET_DEVICES=mlx5_0:1,NCCL_NVLS_ENABLE=0,NCCL_IB_DISABLE=0,NCCL_PXN_DISABLE=0 \
+#     -w node-880A-008 --exclusive --gres=gpu:8 -N 1 --ntasks-per-node=8 \
+#     --container-image="/cm/shared/dock/pytorch_26.02-py3.sqsh" \
+#     all_reduce_perf_mpi -b 8 -e 16G -w 80 -f 2 -n 500
+#
+# Run:
+#   nvcrectl workloadrun run --wait nccl-all-reduce.yaml
+# Preview before running (shows auto-detected platform/GPU overrides):
+#   nvcrectl workloadrun render nccl-all-reduce.yaml
+# View results:
+#   nvcrectl workloadrun report nccl-all-reduce
+apiVersion: nvcre.nvidia.com/v1alpha1
+kind: WorkloadRun
+metadata:
+  name: nccl-all-reduce
+spec:
+  image: nvcr.io/nvidia/pytorch:26.01-py3
+  framework:
+    mpi:
+      mpirunPath: /usr/local/mpi/bin/mpirun
+      binary: /usr/local/bin/all_reduce_perf_mpi
+      args: ["-b", "8", "-e", "16G", "-w", "80", "-f", "2", "-n", "500"]
+      # mpirun -> sshd resets env on workers, so forward via -x as well as spec.env below.
+      mpiArgs:
+        - "-x"
+        - "NCCL_PXN_DISABLE=0"
+        # Forces ORTE's own out-of-band control channel onto plain TCP instead of
+        # UCX -- fixes "wireup.c:168 UCX ERROR ... exceeds max bcopy size 504 on
+        # ud_mlx5" -> fatal "UD endpoint ... unhandled timeout error", proven in
+        # test/nccl-allgather.yaml.
+        - "--mca"
+        - "oob"
+        - "^ucx"
+        # Excludes the stray mlx5_8/mlx5_19 verbs devices from UCX's own async-event
+        # polling -- fixes the continuous "GID table change on port 1" spam, proven
+        # in test/nccl-allgather.yaml.
+        - "-x"
+        - "UCX_NET_DEVICES=mlx5_0:1,mlx5_1:1,mlx5_6:1,mlx5_7:1,mlx5_10:1,mlx5_11:1,mlx5_12:1,mlx5_13:1,mlx5_14:1,mlx5_15:1,mlx5_16:1,mlx5_17:1,mlx5_20:1,mlx5_21:1,mlx5_22:1,mlx5_23:1"
+
+  numNodes: 1
+  # NCCL/UCX/PMIX vars are forwarded ONLY via mpiArgs -x above, not spec.env --
+  # spec.env broadcasts into both the launcher and node containers, and the
+  # launcher has no RDMA NIC, so mpirun's own local process was trying (and
+  # failing) to open mlx5_0 directly. See lab.md / chat history 2026-10-09.
+  target:
+    nodeSelector:
+      nvidia.com/gpu.present: "true"
+  bandwidthMeasurement:
+    logProfileRef: nccl-bandwidth
+    testType: all_reduce

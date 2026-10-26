@@ -1,0 +1,44 @@
+apiVersion: nmstate.io/v1
+kind: NodeNetworkConfigurationPolicy
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"nmstate.io/v1","kind":"NodeNetworkConfigurationPolicy","metadata":{"annotations":{},"name":"worker3-ens1f1np1-mtu9000"},"spec":{"desiredState":{"interfaces":[{"mtu":9000,"name":"ens1f1np1","state":"up","type":"ethernet"}]},"nodeSelector":{"kubernetes.io/hostname":"worker3"}}}
+    nmstate.io/webhook-mutating-timestamp: "1791386216361961777"
+  creationTimestamp: "2026-10-07T15:16:56Z"
+  generation: 1
+  name: worker3-ens1f1np1-mtu9000
+  resourceVersion: "21915478"
+  uid: 528f7d1b-21a6-468a-b749-d89076945419
+spec:
+  desiredState:
+    interfaces:
+    - mtu: 9000
+      name: ens1f1np1
+      state: up
+      type: ethernet
+  nodeSelector:
+    kubernetes.io/hostname: worker3
+status:
+  conditions:
+  - lastHeartbeatTime: "2026-10-07T23:56:29Z"
+    lastTransitionTime: "2026-10-07T23:56:29Z"
+    message: 1/1 nodes successfully configured
+    reason: SuccessfullyConfigured
+    status: "True"
+    type: Available
+  - lastHeartbeatTime: "2026-10-07T23:56:29Z"
+    lastTransitionTime: "2026-10-07T23:56:29Z"
+    reason: SuccessfullyConfigured
+    status: "False"
+    type: Degraded
+  - lastHeartbeatTime: "2026-10-07T23:56:29Z"
+    lastTransitionTime: "2026-10-07T23:56:29Z"
+    reason: SuccessfullyConfigured
+    status: "False"
+    type: Progressing
+  - lastHeartbeatTime: "2026-10-07T23:56:29Z"
+    lastTransitionTime: "2026-10-07T23:56:17Z"
+    reason: SuccessfullyConfigured
+    status: "False"
+    type: Ignored

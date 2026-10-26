@@ -1,0 +1,30 @@
+apiVersion: configuration.net.nvidia.com/v1alpha1
+kind: NicConfigurationTemplate
+metadata:
+  name: storage-nic-qos
+  namespace: nvidia-network-operator
+spec:
+  nicSelector:
+    nicType: a2dc
+    pciAddresses:
+      - '0000:53:00.0'
+      - '0000:53:00.1'
+  nodeSelector:
+    kubernetes.io/hostname: worker3
+  resetToDefault: false
+  template:
+    force: false
+    gpuDirectOptimized:
+      enabled: true
+      env: Baremetal
+    linkType: Ethernet
+    numVfs: 0
+    pciPerformanceOptimized:
+      enabled: true
+      maxReadRequest: 4096
+    roceOptimized:
+      enabled: true
+      qos:
+        pfc: '0,0,0,1,0,0,0,0'
+        tos: 104
+        trust: dscp

@@ -1,0 +1,74 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: rdma-qos-worker2
+  namespace: default
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: worker2
+  restartPolicy: Always
+  serviceAccountName: default
+  priority: 0
+  schedulerName: default-scheduler
+  enableServiceLinks: true
+  terminationGracePeriodSeconds: 30
+  preemptionPolicy: PreemptLowerPriority
+  nodeName: worker2
+  securityContext: {}
+  containers:
+    - resources:
+        limits:
+          rdma/rdmashared: '1'
+        requests:
+          rdma/rdmashared: '1'
+      terminationMessagePath: /dev/termination-log
+      name: rdma
+      command:
+        - bash
+        - '-c'
+      securityContext:
+        capabilities:
+          add:
+            - IPC_LOCK
+            - SYS_RESOURCE
+            - NET_RAW
+            - NET_ADMIN
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: kube-api-access-9g29f
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      terminationMessagePolicy: File
+      image: 'quay.io/edge-infrastructure/nvidia-tools:0.1.5'
+      args:
+        - |
+          set -u
+          # Candidate server IPs on the 10.132.0.0/16 test net (2-host test: whereabouts assigns .0.1/.0.2)
+          CANDIDATES="10.132.0.1 10.132.0.2 10.132.0.3"
+          # Install perftest (ib_write_bw) if missing — air-gapped, via Cisco proxy + Rocky 9 mirror
+          if ! command -v ib_write_bw >/dev/null 2>&1; then
+            export http_proxy=http://proxy.esl.cisco.com:80 https_proxy=http://proxy.esl.cisco.com:80
+            printf '[rk-app]\nname=rk-app\nbaseurl=http://dl.rockylinux.org/pub/rocky/9/AppStream/x86_64/os/\nenabled=1\ngpgcheck=0\n[rk-base]\nname=rk-base\nbaseurl=http://dl.rockylinux.org/pub/rocky/9/BaseOS/x86_64/os/\nenabled=1\ngpgcheck=0\n' > /etc/yum.repos.d/rk.repo
+            dnf -y --disablerepo='*' --enablerepo='rk-app,rk-base' install perftest
+            unset http_proxy https_proxy
+          fi
+          # Wait for the macvlan interface, then auto-detect the RoCEv2 RDMA device for its IP
+          until ip -4 addr show net1 2>/dev/null | grep -q inet; do echo "waiting for net1"; sleep 2; done
+          IP=$(ip -4 -o addr show net1 | awk '{print $4}' | cut -d/ -f1)
+          DEV=$(show_gids | awk -v ip="$IP" '$5==ip && $6=="v2"{print $1; exit}')
+          # Discover the server: the reachable candidate that is not our own IP
+          SERVER=""
+          until [ -n "$SERVER" ]; do
+            for cand in $CANDIDATES; do
+              [ "$cand" = "$IP" ] && continue
+              if ping -c1 -W1 "$cand" >/dev/null 2>&1; then SERVER=$cand; break; fi
+            done
+            [ -z "$SERVER" ] && { echo "waiting for a reachable server among: $CANDIDATES"; sleep 3; }
+          done
+          echo "CLIENT net1=$IP rdma-dev=$DEV -> server $SERVER (no --tos: uses NIC default RoCE ToS from policy)"
+          while true; do
+            ib_write_bw -d "$DEV" -R -F --report_gbits -q 2 -b --run_infinitely "$SERVER" || true
+            echo "client exited, reconnecting in 3s"; sleep 3
+          done
+
+

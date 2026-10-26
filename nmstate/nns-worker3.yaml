@@ -1,0 +1,2860 @@
+apiVersion: nmstate.io/v1beta1
+kind: NodeNetworkState
+metadata:
+  creationTimestamp: "2026-09-23T20:33:37Z"
+  generation: 1
+  labels:
+    nmstate.io/force-nns-refresh: "1791417405585846832"
+  name: worker3
+  ownerReferences:
+  - apiVersion: v1
+    kind: Node
+    name: worker3
+    uid: 859a4554-979b-45bb-8892-e8576c1d3d61
+  resourceVersion: "22965583"
+  uid: be739d06-19c8-4a54-b32d-133e98ec5248
+status:
+  currentState:
+    dns-resolver:
+      config:
+        search:
+        - cisco.lab
+        server:
+        - 172.17.26.173
+      running:
+        search:
+        - cisco.lab
+        server:
+        - 172.17.26.173
+    interfaces:
+    - bridge:
+        options:
+          datapath: ""
+          fail-mode: ""
+          mcast-snooping-enable: false
+          rstp: false
+          stp:
+            enabled: false
+        port:
+        - name: br-ex
+        - name: ens8f0np0
+        - name: patch-br-ex_worker3-to-br-int
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      name: br-ex
+      ovs-db:
+        external_ids: {}
+        other_config:
+          hwaddr: C4:70:BD:83:8C:AE
+      state: up
+      type: ovs-bridge
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      controller: br-ex
+      ethtool:
+        feature:
+          highdma: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-list: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-scatter-gather-fraglist: true
+          tx-sctp-segmentation: true
+          tx-tcp-ecn-segmentation: true
+          tx-tcp-mangleid-segmentation: true
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+      identifier: name
+      ipv4:
+        address:
+        - ip: 10.20.66.38
+          prefix-length: 24
+        - ip: 169.254.0.2
+          prefix-length: 17
+        auto-route-metric: 48
+        dhcp: false
+        enabled: true
+        forwarding: true
+        prefix-route-metric: 48
+      ipv6:
+        auto-route-metric: 48
+        autoconf: false
+        dhcp: false
+        enabled: false
+      lldp:
+        enabled: false
+      mac-address: C4:70:BD:83:8C:AE
+      max-mtu: 65535
+      min-mtu: 68
+      mptcp:
+        address-flags: []
+      mtu: 1500
+      name: br-ex
+      profile-name: ovs-if-br-ex
+      state: up
+      type: ovs-interface
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      controller: br-int
+      ethtool:
+        feature:
+          highdma: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-list: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-scatter-gather-fraglist: true
+          tx-sctp-segmentation: true
+          tx-tcp-ecn-segmentation: true
+          tx-tcp-mangleid-segmentation: true
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        enabled: false
+      mac-address: 86:F4:2D:3A:F9:8D
+      max-mtu: 65535
+      min-mtu: 68
+      mtu: 1400
+      name: br-int
+      state: ignore
+      type: ovs-interface
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: enp42s0
+      - name: ens303
+      driver: igb
+      ethernet:
+        auto-negotiation: true
+      ethtool:
+        coalesce:
+          rx-usecs: 3
+          tx-usecs: 0
+        feature:
+          hw-tc-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-checksum-sctp: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+        pause:
+          autoneg: true
+          rx: true
+          tx: true
+        ring:
+          rx: 256
+          rx-max: 4096
+          tx: 256
+          tx-max: 4096
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 00:A0:C9:00:00:00
+      max-mtu: 9216
+      min-mtu: 68
+      mtu: 1500
+      name: eno1
+      pci-address: 0000:2a:00.0
+      permanent-mac-address: 00:A0:C9:00:00:00
+      profile-name: Wired connection 1
+      state: down
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::f9fb:740e:5ab4:d9b3
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:DA
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno10np0
+      pci-address: "0000:17:00.0"
+      permanent-mac-address: 3C:6D:66:D1:E1:DA
+      profile-name: Wired connection 2
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::2b09:3a2f:4d94:3101
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:BA
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno11np0
+      pci-address: 0000:70:00.0
+      permanent-mac-address: 3C:6D:66:D1:E1:BA
+      profile-name: Wired connection 10
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::f25e:99df:f89:558
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:CA
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno12np0
+      pci-address: "0000:39:00.0"
+      permanent-mac-address: 3C:6D:66:D1:E1:CA
+      profile-name: Wired connection 4
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::e17:f0d9:d3b3:c53b
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:EA
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno13np0
+      pci-address: 0000:5f:00.0
+      permanent-mac-address: 3C:6D:66:D1:E1:EA
+      profile-name: Wired connection 8
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::60e:6c5:fcfc:fbfb
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:7A
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno6np0
+      pci-address: 0000:ed:00.0
+      permanent-mac-address: 3C:6D:66:D1:E1:7A
+      profile-name: Wired connection 23
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::8504:13ab:aa55:93b4
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:9A
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno7np0
+      pci-address: 0000:97:00.0
+      permanent-mac-address: 3C:6D:66:D1:E1:9A
+      profile-name: Wired connection 12
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::6fd2:50c2:bad2:2cd0
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:AA
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno8np0
+      pci-address: 0000:dc:00.0
+      permanent-mac-address: 3C:6D:66:D1:E1:AA
+      profile-name: Wired connection 20
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::de93:f2b1:c283:a1b3
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:8A
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: eno9np0
+      pci-address: 0000:b9:00.0
+      permanent-mac-address: 3C:6D:66:D1:E1:8A
+      profile-name: Wired connection 16
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::9bf2:3263:5b1:ccce
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:7B
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens10f1np1
+      pci-address: 0000:ed:00.1
+      permanent-mac-address: 3C:6D:66:D1:E1:7B
+      profile-name: Wired connection 24
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::6405:4b24:2c76:3bae
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:DB
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens1f1np1
+      pci-address: "0000:17:00.1"
+      permanent-mac-address: 3C:6D:66:D1:E1:DB
+      profile-name: Wired connection 3
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::42c2:c435:1be4:aa62
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:CB
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens2f1np1
+      pci-address: "0000:39:00.1"
+      permanent-mac-address: 3C:6D:66:D1:E1:CB
+      profile-name: Wired connection 5
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: enp38s0u4u3c2
+      driver: cdc_ether
+      ethernet:
+        auto-negotiation: false
+        duplex: half
+      ethtool:
+        feature:
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-generic-segmentation: false
+          tx-nocache-copy: false
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: B2:92:D2:51:C9:B3
+      max-mtu: 65535
+      mtu: 1500
+      name: ens300u4u3c2
+      permanent-mac-address: B2:92:D2:51:C9:B3
+      profile-name: Wired connection 6
+      state: down
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: enp88s0f0
+      driver: i40e
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 1000
+        sr-iov:
+          drivers-autoprobe: true
+          max-vfs: 64
+          total-vfs: 0
+          vfs: []
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-usecs: 50
+          rx-usecs-high: 0
+          tx-frames-irq: 256
+          tx-usecs: 50
+          tx-usecs-high: 0
+        feature:
+          highdma: true
+          hw-tc-offload: false
+          l2-fwd-offload: false
+          loopback: false
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-ntuple-filter: true
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-checksum-sctp: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-ecn-segmentation: true
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+        fec:
+          auto: false
+          mode: baser
+        pause:
+          autoneg: true
+          rx: false
+          tx: false
+        ring:
+          rx: 512
+          rx-max: 8160
+          tx: 512
+          tx-max: 8160
+      identifier: name
+      ipv4:
+        address:
+        - ip: 172.17.27.90
+          prefix-length: 24
+        auto-route-metric: -1
+        dhcp: false
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        auto-route-metric: -1
+        autoconf: false
+        dhcp: false
+        enabled: false
+      lldp:
+        enabled: false
+      mac-address: F0:B2:B9:1A:AC:30
+      max-mtu: 9702
+      min-mtu: 68
+      mptcp:
+        address-flags: []
+      mtu: 1500
+      name: ens3f0
+      pci-address: "0000:58:00.0"
+      permanent-mac-address: F0:B2:B9:1A:AC:30
+      profile-name: Wired connection 14
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: false
+          macsec-hw-offload: true
+          rx-all: true
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: false
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: false
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::2ce9:d1dc:b97a:13d2
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: C4:70:BD:83:86:26
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 1500
+      name: ens3f0np0
+      pci-address: "0000:53:00.0"
+      permanent-mac-address: C4:70:BD:83:86:26
+      profile-name: Wired connection 15
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: enp88s0f1
+      driver: i40e
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 1000
+        sr-iov:
+          drivers-autoprobe: true
+          max-vfs: 64
+          total-vfs: 0
+          vfs: []
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-usecs: 50
+          rx-usecs-high: 0
+          tx-frames-irq: 256
+          tx-usecs: 50
+          tx-usecs-high: 0
+        feature:
+          highdma: true
+          hw-tc-offload: false
+          l2-fwd-offload: false
+          loopback: false
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-ntuple-filter: true
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-checksum-sctp: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-ecn-segmentation: true
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+        fec:
+          auto: false
+          mode: baser
+        pause:
+          autoneg: true
+          rx: false
+          tx: false
+        ring:
+          rx: 512
+          rx-max: 8160
+          tx: 512
+          tx-max: 8160
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: F0:B2:B9:1A:AC:31
+      max-mtu: 9702
+      min-mtu: 68
+      mtu: 1500
+      name: ens3f1
+      pci-address: "0000:58:00.1"
+      permanent-mac-address: F0:B2:B9:1A:AC:31
+      profile-name: Wired connection 17
+      state: down
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: false
+          macsec-hw-offload: true
+          rx-all: true
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: false
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: false
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::9143:6958:cc80:5b30
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: C4:70:BD:83:86:27
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens3f1np1
+      pci-address: "0000:53:00.1"
+      permanent-mac-address: C4:70:BD:83:86:27
+      profile-name: Wired connection 7
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::53f9:e7b2:efe4:9258
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:EB
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens4f1np1
+      pci-address: 0000:5f:00.1
+      permanent-mac-address: 3C:6D:66:D1:E1:EB
+      profile-name: Wired connection 9
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::c7a:8e6d:ab90:b85
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:BB
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens5f1np1
+      pci-address: 0000:70:00.1
+      permanent-mac-address: 3C:6D:66:D1:E1:BB
+      profile-name: Wired connection 11
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::fc9a:eb77:15aa:6a68
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:9B
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens6f1np1
+      pci-address: 0000:97:00.1
+      permanent-mac-address: 3C:6D:66:D1:E1:9B
+      profile-name: Wired connection 13
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::b51e:8d78:e2b3:b460
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:8B
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens7f1np1
+      pci-address: 0000:b9:00.1
+      permanent-mac-address: 3C:6D:66:D1:E1:8B
+      profile-name: Wired connection 18
+      state: up
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      controller: br-ex
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 200000
+        sr-iov:
+          drivers-autoprobe: true
+          max-vfs: 16
+          total-vfs: 0
+          vfs: []
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: false
+          macsec-hw-offload: true
+          rx-all: true
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: false
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: true
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: true
+          tx: true
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        enabled: false
+      lldp:
+        enabled: false
+      mac-address: C4:70:BD:83:8C:AE
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 1500
+      name: ens8f0np0
+      pci-address: 0000:cc:00.0
+      permanent-mac-address: C4:70:BD:83:8C:AE
+      profile-name: ovs-if-phys0
+      state: up
+      type: ethernet
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 200000
+        sr-iov:
+          drivers-autoprobe: true
+          max-vfs: 16
+          total-vfs: 0
+          vfs: []
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: false
+          macsec-hw-offload: true
+          rx-all: true
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: false
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: true
+          tx: true
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: C4:70:BD:83:8C:AF
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 1500
+      name: ens8f1np1
+      pci-address: 0000:cc:00.1
+      permanent-mac-address: C4:70:BD:83:8C:AF
+      profile-name: Wired connection 19
+      state: down
+      type: ethernet
+      wait-ip: any
+    - accept-all-mac-addresses: false
+      driver: mlx5_core
+      ethernet:
+        auto-negotiation: true
+        duplex: full
+        speed: 400000
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          hw-tc-offload: true
+          macsec-hw-offload: true
+          rx-all: false
+          rx-checksum: true
+          rx-fcs: false
+          rx-gro: true
+          rx-gro-hw: false
+          rx-gro-list: false
+          rx-hashing: true
+          rx-lro: false
+          rx-ntuple-filter: false
+          rx-udp-gro-forwarding: false
+          rx-udp_tunnel-port-offload: true
+          rx-vlan-filter: true
+          rx-vlan-hw-parse: true
+          tx-checksum-ip-generic: true
+          tx-esp-segmentation: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-partial: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+        fec:
+          auto: true
+          mode: rs
+        pause:
+          autoneg: false
+          rx: false
+          tx: false
+        ring:
+          rx: 1024
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      identifier: name
+      ipv4:
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+        forwarding: false
+        prefix-route-metric: -1
+      ipv6:
+        addr-gen-mode: stable-privacy
+        address:
+        - ip: fe80::f230:2eea:7568:ea51
+          prefix-length: 64
+        auto-dns: true
+        auto-gateway: true
+        auto-route-metric: -1
+        auto-route-table-id: 0
+        auto-routes: true
+        autoconf: true
+        dhcp: true
+        dhcp-send-hostname: true
+        enabled: true
+      lldp:
+        enabled: false
+      mac-address: 3C:6D:66:D1:E1:AB
+      max-mtu: 9978
+      min-mtu: 68
+      mtu: 9000
+      name: ens9f1np1
+      pci-address: 0000:dc:00.1
+      permanent-mac-address: 3C:6D:66:D1:E1:AB
+      profile-name: Wired connection 21
+      state: up
+      type: ethernet
+      wait-ip: any
+    - mac-address: 06:E5:8E:79:B4:ED
+      name: genev_sys_6081
+      state: ignore
+      type: unknown
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: ibp39s0f0
+      - name: ibs301f0
+      driver: mlx5_core
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-udp-gro-forwarding: false
+          tx-checksum-ipv4: true
+          tx-checksum-ipv6: true
+          tx-generic-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+        ring:
+          rx: 512
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      infiniband:
+        mode: datagram
+        pkey: "0xffff"
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        enabled: false
+      mac-address: 00:00:07:D3:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:76
+      max-mtu: 65520
+      min-mtu: 68
+      mtu: 4092
+      name: ibo4
+      pci-address: "0000:27:00.0"
+      permanent-mac-address: 00:00:07:D3:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:76
+      state: down
+      type: infiniband
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: ibp39s0f1
+      driver: mlx5_core
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-udp-gro-forwarding: false
+          tx-checksum-ipv4: true
+          tx-checksum-ipv6: true
+          tx-generic-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+        ring:
+          rx: 512
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      infiniband:
+        mode: datagram
+        pkey: "0xffff"
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        enabled: false
+      mac-address: 00:00:07:A7:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:77
+      max-mtu: 65520
+      min-mtu: 68
+      mtu: 4092
+      name: ibs301f1
+      pci-address: "0000:27:00.1"
+      permanent-mac-address: 00:00:07:A7:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:77
+      state: down
+      type: infiniband
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: ibp39s0f2
+      driver: mlx5_core
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-udp-gro-forwarding: false
+          tx-checksum-ipv4: true
+          tx-checksum-ipv6: true
+          tx-generic-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+        ring:
+          rx: 512
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      infiniband:
+        mode: datagram
+        pkey: "0xffff"
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        enabled: false
+      mac-address: 00:00:08:1A:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:78
+      max-mtu: 65520
+      min-mtu: 68
+      mtu: 4092
+      name: ibs301f2
+      pci-address: "0000:27:00.2"
+      permanent-mac-address: 00:00:08:1A:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:78
+      state: down
+      type: infiniband
+    - accept-all-mac-addresses: false
+      alt-names:
+      - name: ibp39s0f3
+      driver: mlx5_core
+      ethtool:
+        coalesce:
+          adaptive-rx: true
+          adaptive-tx: true
+          rx-frames: 128
+          rx-usecs: 8
+          tx-frames: 128
+          tx-usecs: 8
+        feature:
+          rx-checksum: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-hashing: true
+          rx-udp-gro-forwarding: false
+          tx-checksum-ipv4: true
+          tx-checksum-ipv6: true
+          tx-generic-segmentation: true
+          tx-nocache-copy: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+        ring:
+          rx: 512
+          rx-max: 8192
+          tx: 1024
+          tx-max: 8192
+      infiniband:
+        mode: datagram
+        pkey: "0xffff"
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        enabled: false
+      mac-address: 00:00:0A:B1:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:79
+      max-mtu: 65520
+      min-mtu: 68
+      mtu: 4092
+      name: ibs301f3
+      pci-address: "0000:27:00.3"
+      permanent-mac-address: 00:00:0A:B1:FE:80:00:00:00:00:00:00:3C:6D:66:03:00:D1:E1:79
+      state: down
+      type: infiniband
+    - accept-all-mac-addresses: false
+      ethtool:
+        feature:
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-generic-segmentation: true
+          tx-gso-list: true
+          tx-sctp-segmentation: true
+          tx-tcp-ecn-segmentation: true
+          tx-tcp-mangleid-segmentation: true
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+      ipv4:
+        address:
+        - ip: 127.0.0.1
+          prefix-length: 8
+        enabled: true
+        forwarding: false
+      ipv6:
+        address:
+        - ip: ::1
+          prefix-length: 128
+        enabled: true
+      mac-address: "00:00:00:00:00:00"
+      mtu: 65536
+      name: lo
+      state: up
+      type: loopback
+    - accept-all-mac-addresses: false
+      controller: br-int
+      ethtool:
+        feature:
+          highdma: true
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-checksum-ip-generic: true
+          tx-generic-segmentation: true
+          tx-gre-csum-segmentation: true
+          tx-gre-segmentation: true
+          tx-gso-list: true
+          tx-ipxip4-segmentation: true
+          tx-ipxip6-segmentation: true
+          tx-nocache-copy: false
+          tx-scatter-gather-fraglist: true
+          tx-sctp-segmentation: true
+          tx-tcp-ecn-segmentation: true
+          tx-tcp-mangleid-segmentation: true
+          tx-tcp-segmentation: true
+          tx-tcp6-segmentation: true
+          tx-udp-segmentation: true
+          tx-udp_tnl-csum-segmentation: true
+          tx-udp_tnl-segmentation: true
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+      ipv4:
+        address:
+        - ip: 10.128.2.2
+          prefix-length: 23
+        enabled: true
+        forwarding: true
+      ipv6:
+        address:
+        - ip: fe80::858:aff:fe80:202
+          prefix-length: 64
+        enabled: true
+      mac-address: 0A:58:0A:80:02:02
+      max-mtu: 65535
+      min-mtu: 68
+      mptcp:
+        address-flags: []
+      mtu: 1400
+      name: ovn-k8s-mp0
+      ovs-db:
+        external_ids:
+          iface-id: k8s-worker3
+          ovn-installed: "true"
+          ovn-installed-ts: "1790195609915"
+        other_config: {}
+      state: ignore
+      type: ovs-interface
+    - controller: br-ex
+      name: patch-br-ex_worker3-to-br-int
+      patch:
+        peer: patch-br-int-to-br-ex_worker3
+      state: ignore
+      type: ovs-interface
+    - controller: br-int
+      name: patch-br-int-to-br-ex_worker3
+      patch:
+        peer: patch-br-ex_worker3-to-br-int
+      state: ignore
+      type: ovs-interface
+    - accept-all-mac-addresses: false
+      ethtool:
+        coalesce:
+          rx-frames: 0
+        feature:
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-checksum-ip-generic: false
+          tx-generic-segmentation: true
+          tx-nocache-copy: false
+          tx-scatter-gather-fraglist: true
+          tx-tcp-ecn-segmentation: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: false
+          tx-tcp6-segmentation: false
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        address:
+        - ip: fe80::21a:caff:feff:ff02
+          prefix-length: 64
+        enabled: true
+      mac-address: 00:1A:CA:FF:FF:02
+      max-mtu: 65521
+      min-mtu: 68
+      mtu: 1500
+      name: tmfifo_net0
+      state: ignore
+      type: tun
+    - accept-all-mac-addresses: false
+      ethtool:
+        coalesce:
+          rx-frames: 0
+        feature:
+          rx-gro: true
+          rx-gro-list: false
+          rx-udp-gro-forwarding: false
+          tx-checksum-ip-generic: false
+          tx-generic-segmentation: true
+          tx-nocache-copy: false
+          tx-scatter-gather-fraglist: true
+          tx-tcp-ecn-segmentation: false
+          tx-tcp-mangleid-segmentation: false
+          tx-tcp-segmentation: false
+          tx-tcp6-segmentation: false
+          tx-vlan-hw-insert: true
+          tx-vlan-stag-hw-insert: true
+      ipv4:
+        enabled: false
+        forwarding: false
+      ipv6:
+        address:
+        - ip: fe80::21a:caff:feff:ff04
+          prefix-length: 64
+        enabled: true
+      mac-address: 00:1A:CA:FF:FF:04
+      max-mtu: 65521
+      min-mtu: 68
+      mtu: 1500
+      name: tmfifo_net1
+      state: ignore
+      type: tun
+    ovn:
+      bridge-mappings:
+      - bridge: br-ex
+        localnet: physnet
+    routes:
+      config:
+      - destination: 172.30.0.0/16
+        next-hop-address: 10.128.2.1
+        next-hop-interface: ovn-k8s-mp0
+        state: ignore
+        table-id: 7
+      - destination: 10.128.0.0/14
+        next-hop-address: 10.128.2.1
+        next-hop-interface: ovn-k8s-mp0
+        state: ignore
+        table-id: 254
+      - destination: 169.254.0.1/32
+        next-hop-address: 0.0.0.0
+        next-hop-interface: br-ex
+        source: 10.20.66.38
+        table-id: 254
+      - destination: 169.254.0.3/32
+        next-hop-address: 10.128.2.1
+        next-hop-interface: ovn-k8s-mp0
+        state: ignore
+        table-id: 254
+      - destination: 172.30.0.0/16
+        mtu: 1400
+        next-hop-address: 169.254.0.4
+        next-hop-interface: br-ex
+        source: 169.254.0.2
+        table-id: 254
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.20.66.66
+        next-hop-interface: br-ex
+        table-id: 254
+      - destination: 172.17.25.0/24
+        next-hop-address: 172.17.27.1
+        next-hop-interface: ens3f0
+        table-id: 254
+      running:
+      - destination: 172.30.0.0/16
+        next-hop-address: 10.128.2.1
+        next-hop-interface: ovn-k8s-mp0
+        state: ignore
+        table-id: 7
+      - destination: 10.128.0.0/14
+        next-hop-address: 10.128.2.1
+        next-hop-interface: ovn-k8s-mp0
+        state: ignore
+        table-id: 254
+      - destination: 169.254.0.1/32
+        next-hop-address: 0.0.0.0
+        next-hop-interface: br-ex
+        source: 10.20.66.38
+        table-id: 254
+      - destination: 169.254.0.3/32
+        next-hop-address: 10.128.2.1
+        next-hop-interface: ovn-k8s-mp0
+        state: ignore
+        table-id: 254
+      - destination: 172.30.0.0/16
+        mtu: 1400
+        next-hop-address: 169.254.0.4
+        next-hop-interface: br-ex
+        source: 169.254.0.2
+        table-id: 254
+      - destination: 0.0.0.0/0
+        next-hop-address: 10.20.66.66
+        next-hop-interface: br-ex
+        table-id: 254
+      - destination: 172.17.25.0/24
+        next-hop-address: 172.17.27.1
+        next-hop-interface: ens3f0
+        table-id: 254
+  handlerNmstateVersion: nmstatectl 2.2.60
+  hostNetworkManagerVersion: 1.54.3
+  lastSuccessfulUpdateTime: "2026-10-08T12:14:31Z"

@@ -1,0 +1,16 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-csi
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true" # Wrapped in quotes
+provisioner: nfs.csi.k8s.io   
+parameters:
+  server: 10.20.66.66   ### NFS server's IP/FQDN
+  share:  /var/nfs/shared             ### NFS server's exported directory
+  subDir: ${pvc.metadata.namespace}-${pvc.metadata.name}-${pv.metadata.name}  ### Folder/subdir name template
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: True
+

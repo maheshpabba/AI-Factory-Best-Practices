@@ -1,0 +1,34 @@
+oc run nccl-test-1 --image=nvcr.io/nvidia/nccl-tests:latest --overrides='{"spec":{"nodeSelector":{"node-
+role.kubernetes.io/worker":""},"containers":[{"name":"nccl-test","image":"nvcr.io/nvidia/nccl-
+tests:latest","command":["/bin/bash"],"args":["-c","cd /workspace/nccl-tests && ./build/all_reduce_perf -b 8 -e 16G -w
+80 -f 2 -n 500"],"resources":{"limits":{"nvidia.com/gpu":8}}}],"restartPolicy":"Never"}}' --restart=Never -n default
+
+
+
+oc run nccl-test-1 --image=nvcr.io/nvidia/nccl-tests:latest --overrides='{
+  "apiVersion": "v1",
+  "metadata": {
+    "annotations": {
+      "k8s.v1.cni.cncf.io/networks": "be-mac-vlan-network-eno6np0, be-mac-vlan-network-eno6np1, be-mac-vlan-network-eno6np2, be-mac-vlan-network-eno6np3, be-mac-vlan-network-eno6np4, be-mac-vlan-network-eno6np5, be-mac-vlan-network-eno6np6, be-mac-vlan-network-eno6np7"
+    }
+  },
+  "spec": {
+    "nodeSelector": {
+      "node-role.kubernetes.io/worker": ""
+    },
+    "containers": [
+      {
+        "name": "nccl-test",
+        "image": "nvcr.io/nvidia/nccl-tests:latest",
+        "command": ["/bin/bash"],
+        "args": ["-c", "cd /workspace/nccl-tests && ./build/all_reduce_perf -b 8 -e 16G -w 80 -f 2 -n 500"],
+        "resources": {
+          "limits": {
+            "nvidia.com/gpu": "8"
+          }
+        }
+      }
+    ],
+    "restartPolicy": "Never"
+  }
+}' --restart=Never -n default

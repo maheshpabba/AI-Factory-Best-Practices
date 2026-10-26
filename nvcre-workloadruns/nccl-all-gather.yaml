@@ -1,0 +1,75 @@
+# WorkloadRun: NCCL AllGather bandwidth test.
+# NOTE: binary path assumes the pytorch image ships an "_mpi" suffixed build,
+# matching the all_reduce_perf_mpi convention confirmed in NVIDIA's docs.
+# Verify before running:
+#   oc run nccl-check --rm -it --image=nvcr.io/nvidia/pytorch:26.01-py3 -- \
+#     ls /usr/local/bin | grep all_gather
+#
+# Run:
+#   nvcrectl workloadrun run --wait nccl-all-gather.yaml
+apiVersion: nvcre.nvidia.com/v1alpha1
+kind: WorkloadRun
+metadata:
+  name: nccl-all-gather
+spec:
+  image: nvcr.io/nvidia/pytorch:26.01-py3
+  # Requests the RDMA NICs so the pod actually gets the HCA devices to test.
+  # Confirmed via `oc get node worker3 -o json` allocatable resources:
+  #   rdma/rdma_shared_device_a: 1k   <- the RDMA shared-device-plugin pool in use
+  #   rdma/rdmashared: 0              <- unused pool, do not use
+  # mlnxPerNode: 8 matches this node's rail-optimized topology (one dedicated
+  # NIC pair per GPU, confirmed via `nvidia-smi topo -m` — see README.md).
+  nicResourceName: rdma/rdmashared
+  mlnxPerNode: 4
+  resources:
+    limits:
+      rdma/rdmashared: '1'
+    requests:
+      rdma/rdmashared: '1'
+  framework:
+    mpi:
+      mpirunPath: /usr/local/mpi/bin/mpirun
+      binary: /usr/local/bin/all_gather_perf_mpi
+      args: ["-b", "8", "-e", "16G", "-w", "80", "-f", "2", "-n", "500"]
+      mpiArgs:
+        - "-x"
+        - "NCCL_PXN_DISABLE=0"
+        # Forces ORTE's own out-of-band control channel onto plain TCP instead of
+        # UCX -- fixes "wireup.c:168 UCX ERROR ... exceeds max bcopy size 504 on
+        # ud_mlx5" -> fatal "UD endpoint ... unhandled timeout error", proven in
+        # test/nccl-allgather.yaml.
+        - "--mca"
+        - "oob"
+        - "^ucx"
+        # Excludes the stray mlx5_8/mlx5_19 verbs devices from UCX's own async-event
+        # polling -- fixes the continuous "GID table change on port 1" spam, proven
+        # in test/nccl-allgather.yaml.
+        - "-x"
+        - "UCX_NET_DEVICES=mlx5_0:1,mlx5_1:1,mlx5_6:1,mlx5_7:1,mlx5_10:1,mlx5_11:1,mlx5_12:1,mlx5_13:1,mlx5_14:1,mlx5_15:1,mlx5_16:1,mlx5_17:1,mlx5_20:1,mlx5_21:1,mlx5_22:1,mlx5_23:1"
+  numNodes: 1
+  # NCCL/UCX/PMIX vars are forwarded ONLY via mpiArgs -x above, not here --
+  # spec.env broadcasts into both the launcher and node containers, and the
+  # launcher has no RDMA NIC, so mpirun's own local process was trying (and
+  # failing) to open mlx5_0 directly. See lab.md / chat history 2026-10-09.
+  env:
+    # Cluster-wide proxy (oc get proxy cluster) is NOT auto-injected into pods;
+    # the MPI launcher's "apt-get install openssh-server" step needs these to
+    # reach archive.ubuntu.com, since nvcr.io/nvidia/pytorch doesn't ship sshd.
+    - name: HTTP_PROXY
+      value: "http://173.36.224.108:80/"
+    - name: HTTPS_PROXY
+      value: "http://173.36.224.108:80/"
+    - name: NO_PROXY
+      value: ".cluster.local,.lgsgpu.cisco.lab,.svc,10.128.0.0/14,10.20.66.0/24,127.0.0.1,172.17.26.0/23,172.30.0.0/16,api-int.lgsgpu.cisco.lab,localhost"
+    - name: http_proxy
+      value: "http://173.36.224.108:80/"
+    - name: https_proxy
+      value: "http://173.36.224.108:80/"
+    - name: no_proxy
+      value: ".cluster.local,.lgsgpu.cisco.lab,.svc,10.128.0.0/14,10.20.66.0/24,127.0.0.1,172.17.26.0/23,172.30.0.0/16,api-int.lgsgpu.cisco.lab,localhost"
+  target:
+    nodeSelector:
+      nvidia.com/gpu.present: "true"
+  bandwidthMeasurement:
+    logProfileRef: nccl-bandwidth
+    testType: all_gather

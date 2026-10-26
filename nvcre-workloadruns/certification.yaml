@@ -1,0 +1,29 @@
+apiVersion: nvcre.nvidia.com/v1alpha1
+kind: Certification
+metadata:
+  name: gpu-cluster-cert
+spec:
+  target:
+    nodeSelector:
+      nvidia.com/gpu.present: "true"
+  # 4 GPUs/node x 2 nodes (worker3 + worker4) = 8 GPUs total for this run.
+  gpusPerNode: 4
+  # Force both nodes into ONE job/group per category, instead of testing
+  # worker3 and worker4 as two separate single-node jobs.
+  nodesPerJob: 2
+  # full-scale = all matching nodes in a single group (the default, set
+  # explicitly for clarity). Non-communication categories ignore this field.
+  testScale: full-scale
+  categories:
+    - domain: communication
+      variant: nccl-all-reduce
+    # - domain: communication
+    #   variant: nccl-all-gather
+    # - domain: communication
+    #   variant: nccl-alltoall
+    # - domain: communication
+    #   variant: nccl-loopback
+    # - domain: communication
+    #   variant: nccl-loopback-nvswitch
+    # - domain: training
+    #   variant: nemotron5-8b

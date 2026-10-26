@@ -1,0 +1,44 @@
+apiVersion: configuration.net.nvidia.com/v1alpha1
+kind: NicConfigurationTemplate
+metadata:
+  name: backend-nic-qos
+  namespace: nvidia-network-operator
+spec:
+  nicSelector:
+    nicType: '1023'
+    pciAddresses:
+      - '0000:17:00.0'
+      - '0000:17:00.1'
+      - '0000:39:00.0'
+      - '0000:39:00.1'
+      - '0000:5f:00.0'
+      - '0000:5f:00.1'
+      - '0000:70:00.0'
+      - '0000:70:00.1'
+      - '0000:97:00.0'
+      - '0000:97:00.1'
+      - '0000:b9:00.0'
+      - '0000:b9:00.1'
+      - '0000:dc:00.0'
+      - '0000:dc:00.1'
+      - '0000:ed:00.0'
+      - '0000:ed:00.1'
+  nodeSelector:
+    node-role.kubernetes.io/gpuworker880: ''
+  resetToDefault: false
+  template:
+    gpuDirectOptimized:
+      enabled: true
+      env: Baremetal
+    linkType: Ethernet
+    numVfs: 0
+    pciPerformanceOptimized:
+      enabled: true
+      maxReadRequest: 4096
+    roceOptimized:
+      enabled: true
+      qos:
+        pfc: '0,0,0,1,0,0,0,0'
+        tos: 104
+        trust: dscp
+

@@ -1,0 +1,124 @@
+╔════════════════════════════════════════════════════════════════╗
+║              NCCL Collective Validation Report                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+  Cluster:   lgsgpu.cisco.lab
+  Platform:  OpenShift (hand-written Kubeflow MPIJob, bypassing nvcrectl)
+  GPU:       8 GPUs/node x 2 nodes (16 total)
+  Nodes:     worker3, worker4
+  Transport: RoCE via 16 macvlan NICs (rdma/rdmashared), ARP/RPF-fixed
+  Image:     nvcr.io/nvidia/pytorch:26.01-py3
+
+  Common launcher settings (validated across all four tests):
+    NCCL_NVLS_ENABLE=0 (required -- NVLS transport init fails without it)
+    NCCL_PXN_DISABLE=0, NCCL_IB_GID_INDEX=5, NCCL_IB_DISABLE=0
+    NCCL_CUMEM_ENABLE=1, NCCL_NET_GDR_C2C=1, NCCL_NET_GDR_LEVEL=PHB
+    NCCL_P2P_NET_CHUNKSIZE=2097152, NCCL_SHM_DISABLE=1, NCCL_MNNVL_ENABLE=0
+    UCX_NET_DEVICES=<16 mlx5 devices> (NCCL_IB_HCA/NCCL_SOCKET_IFNAME confirmed unnecessary)
+    Message range: 8B - 16GB (-f 2), 100 iterations, 5 warmup
+
+┌────────────────────────────────────────────────────────────────┐
+│  workloadrun/nccl-allreduce-2node                               │
+├────────────────────────────────────────────────────────────────┤
+│  Status:    Succeeded                                          │
+│  Scale:     cross-node (2 nodes x 8 GPUs)                       │
+│  Out of bounds values: 0 OK                                     │
+│                                                                │
+│  Avg bus bandwidth: 206.994 GB/s                                │
+│                                                                │
+│  Peak (16 GB message):                                         │
+│    AlgBW (out-of-place):  414.98 GB/s                           │
+│    BusBW (out-of-place):  778.08 GB/s                           │
+│    AlgBW (in-place):      415.03 GB/s                           │
+│    BusBW (in-place):      778.17 GB/s                           │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│  workloadrun/nccl-allgather-2node                               │
+├────────────────────────────────────────────────────────────────┤
+│  Status:    Succeeded                                          │
+│  Scale:     cross-node (2 nodes x 8 GPUs)                       │
+│  Out of bounds values: 0 OK                                     │
+│                                                                │
+│  Avg bus bandwidth: 185.496 GB/s                                │
+│                                                                │
+│  Peak (16 GB message):                                         │
+│    AlgBW (out-of-place):  779.61 GB/s                           │
+│    BusBW (out-of-place):  730.88 GB/s                           │
+│    AlgBW (in-place):      799.02 GB/s                           │
+│    BusBW (in-place):      749.08 GB/s                           │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│  workloadrun/nccl-alltoall-2node                                │
+├────────────────────────────────────────────────────────────────┤
+│  Status:    Succeeded                                          │
+│  Scale:     cross-node (2 nodes x 8 GPUs)                       │
+│  Out of bounds values: 0 OK                                     │
+│                                                                │
+│  Avg bus bandwidth: 53.800 GB/s                                 │
+│  (Lower than other collectives is expected -- many-to-many      │
+│   pattern has smaller effective per-pair message sizes.)         │
+│                                                                │
+│  Peak (16 GB message):                                         │
+│    AlgBW (out-of-place):  193.24 GB/s                           │
+│    BusBW (out-of-place):  181.16 GB/s                           │
+│    AlgBW (in-place):      194.30 GB/s                           │
+│    BusBW (in-place):      182.16 GB/s                           │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│  workloadrun/nccl-reducescatter-2node                           │
+├────────────────────────────────────────────────────────────────┤
+│  Status:    Succeeded                                          │
+│  Scale:     cross-node (2 nodes x 8 GPUs)                       │
+│  Out of bounds values: 0 OK                                     │
+│                                                                │
+│  Avg bus bandwidth: 193.980 GB/s                                │
+│                                                                │
+│  Peak (16 GB message):                                         │
+│    AlgBW (out-of-place):  828.91 GB/s                           │
+│    BusBW (out-of-place):  777.10 GB/s                           │
+│    AlgBW (in-place):      828.96 GB/s                           │
+│    BusBW (in-place):      777.15 GB/s                           │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│  Summary                                                       │
+├────────────────────────────────────────────────────────────────┤
+│  Collectives tested: all_reduce, all_gather, alltoall,          │
+│                      reduce_scatter                             │
+│  Categories:   4/4 passed                                       │
+│  Failed Nodes: none                                             │
+│  Correctness:  0 out-of-bounds values across all four tests     │
+│  Result:       PASSED                                           │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│  trainjob/nemotron5-8b-2node                                    │
+├────────────────────────────────────────────────────────────────┤
+│  Status:    Succeeded                                          │
+│  Scale:     cross-node (2 nodes x 8 GPUs, TP1/PP1/DP16)         │
+│  Model:     Nemotron5-8B (8.05B params), mock data              │
+│  Runtime:   ~8 min, 1500/1500 iterations                        │
+│                                                                │
+│  lm loss:        12.19 (iter 1)   ->  0.008 (iter 1500)         │
+│  params norm:    1094.27 (iter 1) ->  1338.85 (iter 1500)       │
+│  (params norm changing every iteration confirms weight updates) │
+│                                                                │
+│  Throughput:     ~849 TFLOP/s/GPU, ~497 ms/iteration (steady)   │
+│  Skipped/NaN iterations: 0 / 0 (entire run)                     │
+│                                                                │
+│  Note: per-iteration metrics are logged by Megatron's last      │
+│  rank (node-0-1), not rank 0 (node-0-0).                        │
+└────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────┐
+│  Final Summary                                                 │
+├────────────────────────────────────────────────────────────────┤
+│  Tests:        4 collectives + 1 training job                  │
+│  Categories:   5/5 passed                                       │
+│  Failed Nodes: none                                             │
+│  Result:       PASSED                                          │
+└────────────────────────────────────────────────────────────────┘
+

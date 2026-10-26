@@ -1,0 +1,36 @@
+docs/gpu-operator-upgrade-MOP/*
+docs/
+nvcre-workloadruns/results*
+*.zip
+
+# Local operating system and editor files
+.DS_Store
+._*
+.vscode/
+*.swp
+*~
+
+# Local credentials and private keys
+.env
+.env.*
+!.env.example
+.kube/
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Raw switch snapshot contains account password settings
+/switch-configs/switch-config.txt
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Generated logs
+*.log

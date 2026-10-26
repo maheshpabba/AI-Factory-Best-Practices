@@ -1,0 +1,33 @@
+oc run nccl-check --rm -i --restart=Never --image=nvcr.io/nvidia/pytorch:26.01-py3 -- bash -c "ls /usr/local/bin | grep -E 'all_gather|all_reduce'"
+
+In short: the device plugin says "you're allowed to use RDMA," the Multus annotation says "here are the actual wires, with addresses, you can use it on." Drop the annotation and ibv_devinfo may still list devices as verbs objects, but NCCL has no routable GID/IP to establish a queue pair with a remote peer — which is exactly the failure mode we hit earlier this engagement (the launcher pod, which intentionally has no RDMA NIC attachments, trying to open mlx5_0 directly and failing).
+
+
+
+# Watch pool-level rollout status
+oc get mcp -w
+
+# Which MachineConfig is rendered/desired for the pool
+oc describe mcp gpuworker880
+
+# Per-node progress (the two key annotations)
+oc get node worker3 -o jsonpath='{.metadata.annotations.machineconfiguration\.openshift\.io/currentConfig}{"\n"}{.metadata.annotations.machineconfiguration\.openshift\.io/desiredConfig}{"\n"}{.metadata.annotations.machineconfiguration\.openshift\.io/state}{"\n"}'
+
+# Live tail of what MCO is actually doing on that node (the real work log)
+oc logs -n openshift-machine-config-operator -f machine-config-daemon-<pod-on-that-node> -c machine-config-daemon
+
+# See the actual rendered config content (what's being pushed down)
+oc get mc rendered-gpuworker880-<hash> -o yaml | less
+
+
+# Watch all enactments update in real time
+oc get nnce -w
+
+# Full detail + conditions/events for one enactment
+oc describe nnce worker3.worker3-eno6np0-mtu9000
+
+# Live NMState controller log (the actual nmstatectl apply attempts/errors)
+oc logs -n openshift-nmstate -f <nmstate-handler-pod-on-that-node>
+
+# Live reported interface state from the node (to see MTU/carrier/state as NMState sees it)
+oc get nns worker3 -o yaml | less

@@ -1,0 +1,42 @@
+apiVersion: nvidia.com/v1alpha1
+kind: NVIDIADriver
+metadata:
+  name: gpu-driver
+spec:
+  licensingConfig:
+    nlsEnabled: true
+    secretName: ''
+  nodeSelector:
+    kubernetes.io/hostname: worker3
+    network.nvidia.com/operator.mofed.wait: 'false'
+  default: false
+  driverType: gpu
+  kernelModuleType: auto
+  certConfig:
+    name: ''
+  repository: nvcr.io/nvidia
+  kernelModuleConfig:
+    name: ''
+  manager: {}
+  upgradePolicy:
+    autoUpgrade: true
+    drain:
+      deleteEmptyDir: false
+      enable: false
+      force: false
+      timeoutSeconds: 300
+    maxParallelUpgrades: 1
+    maxUnavailable: 25%
+    podDeletion:
+      deleteEmptyDir: false
+      force: false
+      timeoutSeconds: 300
+    waitForCompletion:
+      timeoutSeconds: 0
+  repoConfig:
+    name: ''
+  version: 'sha256:e243d778bd83de47668e7629d78f673317a130fedc99941be12aad7fc6bdfa85'
+  image: driver
+  virtualTopologyConfig:
+    name: ''
+

@@ -1,0 +1,26 @@
+apiVersion: mellanox.com/v1alpha1
+kind: NicClusterPolicy
+metadata:
+  name: nic-cluster-policy
+spec:
+  docaTelemetryService:
+    image: doca_telemetry
+    imagePullSecrets: []
+    repository: nvcr.io/nvidia/doca
+    version: 1.25.5-doca3.4.0-host
+  nicConfigurationOperator:
+    configurationDaemon:
+      image: nic-configuration-operator-daemon
+      imagePullSecrets: []
+      repository: nvcr.io/nvidia/mellanox
+      version: network-operator-v26.7.0
+    env:
+      - name: SKIP_DEVICE_ON_DISCOVERY_ERROR
+        value: 'true'
+    logLevel: info
+    operator:
+      image: nic-configuration-operator
+      imagePullSecrets: []
+      repository: nvcr.io/nvidia/mellanox
+      version: network-operator-v26.7.0
+

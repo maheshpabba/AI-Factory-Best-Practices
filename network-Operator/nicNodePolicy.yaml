@@ -1,0 +1,82 @@
+apiVersion: mellanox.com/v1alpha1
+kind: NicNodePolicy
+metadata:
+  name: worker3
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: worker3
+  ofedDriver:
+    imagePullSecrets: []
+    readinessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 1
+      timeoutSeconds: 10
+    forcePrecompiled: false
+    terminationGracePeriodSeconds: 300
+    repository: nvcr.io/nvidia/mellanox
+    livenessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+    env:
+      - name: CREATE_IFNAMES_UDEV
+        value: 'false'
+      - name: ENTRYPOINT_DEBUG
+        value: 'true'
+      - name: RESTORE_DRIVER_ON_POD_TERMINATION
+        value: 'false'
+      - name: UNLOAD_STORAGE_MODULES
+        value: 'true'
+      - name: ENABLE_NFSRDMA
+        value: 'true'
+      - name: SKIP_PREFLIGHT_CHECKS
+        value: 'false'
+    upgradePolicy:
+      autoUpgrade: true
+      drain:
+        deleteEmptyDir: true
+        enable: false
+        force: true
+        podSelector: ''
+        timeoutSeconds: 300
+      maxParallelUpgrades: 1
+      safeLoad: true
+    startupProbe:
+      failureThreshold: 2400
+      initialDelaySeconds: 10
+      periodSeconds: 1
+      timeoutSeconds: 10
+    version: doca3.5.0-26.07-0.7.7.0-1
+    image: doca-driver
+  rdmaSharedDevicePlugin:
+    config: |
+      {
+        "configList": [
+          {
+            "resourceName": "rdmashared",
+            "rdmaHcaMax": 1000,
+            "selectors": {
+              "ifNames": [
+                "ens1f1np1", "ens2f1np1", "ens4f1np1", "ens5f1np1",
+                "ens6f1np1", "ens7f1np1", "ens9f1np1", "ens10f1np1",
+                "eno6np0", "eno7np0", "eno8np0", "eno9np0",
+                "eno10np0", "eno11np0", "eno12np0", "eno13np0"
+                ]
+            }
+          }
+        ]
+      }
+    image: k8s-rdma-shared-dev-plugin
+    imagePullSecrets: []
+    repository: nvcr.io/nvidia/mellanox
+    version: network-operator-v26.7.0
+  tolerations:
+    - effect: NoSchedule
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+    - effect: NoSchedule
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+
