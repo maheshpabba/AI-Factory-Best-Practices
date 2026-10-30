@@ -1,0 +1,34 @@
+apiVersion: mellanox.com/v1alpha1
+kind: NicClusterPolicy
+metadata:
+  name: nic-cluster-policy
+spec:
+  docaTelemetryService:
+    image: doca_telemetry
+    imagePullSecrets: []
+    repository: nvcr.io/nvidia/doca
+    version: 1.26.5-doca3.5.0-host
+  nicConfigurationOperator:
+    configurationDaemon:
+      image: nic-configuration-operator-daemon
+      imagePullSecrets: []
+      repository: nvcr.io/nvidia/mellanox
+      version: network-operator-v26.7.0
+    env:
+      - name: SKIP_DEVICE_ON_DISCOVERY_ERROR
+        value: 'true'
+      # External-BMC platforms (B200/B300/GB200/GB300 etc.) keep the NIC powered across an
+      # OS reboot, so a flashed image never activates without an explicit mlxfwreset first.
+      - name: FW_RESET_AFTER_CONFIG_UPDATE
+        value: 'true'
+    logLevel: info
+    operator:
+      image: nic-configuration-operator
+      imagePullSecrets: []
+      repository: nvcr.io/nvidia/mellanox
+      version: network-operator-v26.7.0
+    nicFirmwareStorage:
+      create: true
+      pvcName: nic-fw-storage-pvc
+      storageClassName: nfs-csi
+      availableStorageSize: 5Gi

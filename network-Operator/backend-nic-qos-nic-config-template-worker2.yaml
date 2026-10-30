@@ -1,0 +1,34 @@
+apiVersion: configuration.net.nvidia.com/v1alpha1
+kind: NicConfigurationTemplate
+metadata:
+  name: backend-nic-qos-worker2
+  namespace: nvidia-network-operator
+spec:
+  nicSelector:
+    nicType: '1023'
+    pciAddresses:
+      - '0000:01:00.0'
+  nodeSelector:
+    kubernetes.io/hostname: worker2
+  resetToDefault: false
+  template:
+    force: false
+    gpuDirectOptimized:
+      enabled: true
+      env: Baremetal
+    linkType: Ethernet
+    numVfs: 0
+    pciPerformanceOptimized:
+      enabled: true
+      maxReadRequest: 4096
+    rawNvConfig:
+      - name: CNP_DSCP_P1
+        value: '48'
+      - name: CNP_DSCP_P2
+        value: '48'
+    roceOptimized:
+      enabled: true
+      qos:
+        pfc: '0,0,0,1,0,0,0,0'
+        tos: 104
+        trust: dscp

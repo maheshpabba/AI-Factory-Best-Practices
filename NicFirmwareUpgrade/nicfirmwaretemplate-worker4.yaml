@@ -1,0 +1,30 @@
+apiVersion: configuration.net.nvidia.com/v1alpha1
+kind: NicFirmwareTemplate
+metadata:
+  name: cx8-firmware-upgrade-worker4
+  namespace: nvidia-network-operator
+spec:
+  nicSelector:
+    nicType: '1023'  # 1023 points to ConnectX-8
+    pciAddresses:
+      - '0000:17:00.0'
+      - '0000:17:00.1'
+      - '0000:39:00.0'
+      - '0000:39:00.1'
+      - '0000:5f:00.0'
+      - '0000:5f:00.1'
+      - '0000:70:00.0'
+      - '0000:70:00.1'
+      - '0000:97:00.0'
+      - '0000:97:00.1'
+      - '0000:b9:00.0'
+      - '0000:b9:00.1'
+      - '0000:dc:00.0'
+      - '0000:dc:00.1'
+      - '0000:ed:00.0'
+      - '0000:ed:00.1'
+  nodeSelector:
+    kubernetes.io/hostname: worker4
+  template:
+    nicFirmwareSourceRef: connectx8-firmware-40-50-1002  # References the Source CR name
+    updatePolicy: Update  # Triggers the Operator to apply the update

@@ -1,0 +1,11 @@
+apiVersion: configuration.net.nvidia.com/v1alpha1
+kind: NicFirmwareSource
+metadata:
+  name: connectx8-firmware-40-50-1002
+  namespace: nvidia-network-operator
+  finalizers:
+    - configuration.net.nvidia.com/nic-configuration-operator
+spec:
+  # Operator unzips this automatically before flashing; PSID P6612 / OPN 900-9X86E-00CX-STO family (ConnectX-8, nicType 1023)
+  binUrlSources:
+    - https://www.mellanox.com/downloads/firmware/fw-ConnectX8-rel-40_50_1002-P6612_Ax-UEFI-14.43.10-FlexBoot-3.9.101.signed.bin.zip
