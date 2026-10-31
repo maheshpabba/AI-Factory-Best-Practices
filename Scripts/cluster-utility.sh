@@ -42,6 +42,20 @@ set -o pipefail
 # error -- fixed only in bash 4.4+).
 
 SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Default artifact templates, resolved relative to this script's location so
+# the tool works regardless of the caller's cwd (override with the matching
+# --*-template flag).
+NNCP_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/nmstate/interface.yaml"
+NVDRIVER_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/gpu-operator/nvidiadriver.yaml"
+NICNODEPOLICY_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/network-operator/nicnodepolicy.yaml"
+MACVLAN_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/network-operator/macvlan.yaml"
+NICCONFIG_BE_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/network-operator/nicconfig-be.yaml"
+NICCONFIG_ST_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/network-operator/nicconfig-st.yaml"
+# Cluster-wide singletons (no per-node placeholders) -- copied verbatim
+# alongside whichever per-node artifacts of their operator get generated.
+CLUSTERPOLICY_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/gpu-operator/clusterpolicy.yaml"
+NICCLUSTERPOLICY_TEMPLATE_DEFAULT="${SCRIPT_DIR}/../Templates/network-operator/nicclusterpolicy.yaml"
 
 usage() {
   cat <<EOF
@@ -78,14 +92,53 @@ NON-INTERACTIVE MODE (any of -n/-r/-p/-g given -> runs silently, no prompts):
                   all = no filter.
                   e.g. -p device:cx8,pcie:bf,iface:cx7,table,bond
   -g <codes>      Comma-separated artifact codes to generate:
-                    nncp        NodeNetworkConfigurationPolicy YAMLs
+                    nncp            NodeNetworkConfigurationPolicy YAMLs
+                    nvdriver        NVIDIADriver YAMLs (GPU Operator, per node)
+                    nicnodepolicy   NicNodePolicy YAMLs (Network Operator, per node)
+                    macvlan         MacvlanNetwork YAMLs (Network Operator, one
+                                    per unique interface, not per node)
+                    nicconfig-be    NicConfigurationTemplate -- backend (per node)
+                    nicconfig-st    NicConfigurationTemplate -- storage (per node)
+                    all             Everything above
+                  Generating any gpu-operator code (nvdriver) also copies the
+                  cluster-wide ClusterPolicy singleton into --gpu-dir; generating
+                  any network-operator code (nicnodepolicy/macvlan/nicconfig-be/
+                  nicconfig-st) also copies the NicClusterPolicy singleton into
+                  --network-dir -- so the output directory has everything that
+                  operator needs (handy for GitOps/ArgoCD). Existing files are
+                  overwritten so the copy stays in sync with the template.
 
   Tuning flags for -g (all optional):
-  --family <cx8|cx7|all>   Which interfaces to use (default: cx8)
+  --family <cx8|cx7|all>   Which interfaces to use for nncp/macvlan/
+                           nicnodepolicy (default: cx8)
   --ifaces "<names>"       Custom space/comma separated interface list
                            (overrides --family)
-  --mtu <n>                MTU (default: 9000)
+  --mtu <n>                MTU, used by nncp and macvlan (default: 9000)
   --nncp-dir <dir>         NNCP output directory (default: NNCP)
+  --nncp-template <file>   NNCP Jinja-style template (default:
+                           Templates/nmstate/interface.yaml next to this script)
+  --gpu-dir <dir>          nvdriver output directory (default: GPU-Operator)
+  --network-dir <dir>      nicnodepolicy/macvlan/nicconfig-be/nicconfig-st
+                           output directory (default: Network-Operator)
+  --nvdriver-template <file>        Template (default:
+                                    Templates/gpu-operator/nvidiadriver.yaml)
+  --nicnodepolicy-template <file>   Template (default:
+                                    Templates/network-operator/nicnodepolicy.yaml)
+  --macvlan-template <file>         Template (default:
+                                    Templates/network-operator/macvlan.yaml)
+  --nicconfig-be-template <file>    Template (default:
+                                    Templates/network-operator/nicconfig-be.yaml)
+  --nicconfig-st-template <file>    Template (default:
+                                    Templates/network-operator/nicconfig-st.yaml)
+  --clusterpolicy-template <file>       Template (default:
+                                        Templates/gpu-operator/clusterpolicy.yaml)
+  --nicclusterpolicy-template <file>    Template (default:
+                                        Templates/network-operator/nicclusterpolicy.yaml)
+  --nicconfig-be-family <cx8|cx7|bf|all>   PCIe source family for nicconfig-be
+                                            (default: cx8)
+  --nicconfig-st-family <cx8|cx7|bf|all>   PCIe source family for nicconfig-st
+                                            (default: bf -- storage NICs on this
+                                            fleet are BlueField-3/ConnectX-7)
 
   -T <mode>       Nvidia Cluster Readiness test prepare/check. Runs standalone
                   (ignores -n/-r/-p/-g). Installs (or removes) everything
@@ -131,6 +184,8 @@ Examples:
   ./${SCRIPT_NAME} -n all -p pcie:cx8,device:cx8
   ./${SCRIPT_NAME} -r gpuworker880 -p iface:bf,table
   ./${SCRIPT_NAME} -n worker3,worker4 -p all -g nncp --family cx8
+  ./${SCRIPT_NAME} -n worker3,worker4 -g all
+  ./${SCRIPT_NAME} -r gpuworker880 -g nvdriver,nicnodepolicy,macvlan,nicconfig-be,nicconfig-st
   ./${SCRIPT_NAME} -T prepare --nvcre-namespace default
   ./${SCRIPT_NAME} -T cleanup --nvcre-namespace default
 EOF
@@ -142,7 +197,12 @@ EOF
 # ---------------------------------------------------------------------------
 NODES_ARG=""; ROLES_ARG=""; PRINT_ARG=""; GENERATE_ARG=""
 CLI_FAMILY="cx8"; CLI_IFACES=""; CLI_MTU="9000"
-CLI_NNCP_DIR="NNCP"
+CLI_NNCP_DIR="NNCP"; CLI_NNCP_TEMPLATE=""
+CLI_GPU_DIR="GPU-Operator"; CLI_NETWORK_DIR="Network-Operator"
+CLI_NVDRIVER_TEMPLATE=""; CLI_NICNODEPOLICY_TEMPLATE=""; CLI_MACVLAN_TEMPLATE=""
+CLI_NICCONFIG_BE_TEMPLATE=""; CLI_NICCONFIG_ST_TEMPLATE=""
+CLI_NICCONFIG_BE_FAMILY="cx8"; CLI_NICCONFIG_ST_FAMILY="bf"
+CLI_CLUSTERPOLICY_TEMPLATE=""; CLI_NICCLUSTERPOLICY_TEMPLATE=""
 TESTPREP_ARG=""
 NVCRE_NAMESPACE="default"; NVCRE_AIRGAPPED="n"; NVCRE_AIRGAPPED_SET="n"; NVCRE_ARP_FIX="n"
 NVCRE_IMAGE="registry.redhat.io/ubi9/python-312-minimal:latest"
@@ -159,6 +219,18 @@ while [ $# -gt 0 ]; do
     --ifaces) CLI_IFACES="$2"; shift 2 ;;
     --mtu) CLI_MTU="$2"; shift 2 ;;
     --nncp-dir) CLI_NNCP_DIR="$2"; shift 2 ;;
+    --nncp-template) CLI_NNCP_TEMPLATE="$2"; shift 2 ;;
+    --gpu-dir) CLI_GPU_DIR="$2"; shift 2 ;;
+    --network-dir) CLI_NETWORK_DIR="$2"; shift 2 ;;
+    --nvdriver-template) CLI_NVDRIVER_TEMPLATE="$2"; shift 2 ;;
+    --nicnodepolicy-template) CLI_NICNODEPOLICY_TEMPLATE="$2"; shift 2 ;;
+    --macvlan-template) CLI_MACVLAN_TEMPLATE="$2"; shift 2 ;;
+    --nicconfig-be-template) CLI_NICCONFIG_BE_TEMPLATE="$2"; shift 2 ;;
+    --nicconfig-st-template) CLI_NICCONFIG_ST_TEMPLATE="$2"; shift 2 ;;
+    --nicconfig-be-family) CLI_NICCONFIG_BE_FAMILY="$2"; shift 2 ;;
+    --nicconfig-st-family) CLI_NICCONFIG_ST_FAMILY="$2"; shift 2 ;;
+    --clusterpolicy-template) CLI_CLUSTERPOLICY_TEMPLATE="$2"; shift 2 ;;
+    --nicclusterpolicy-template) CLI_NICCLUSTERPOLICY_TEMPLATE="$2"; shift 2 ;;
     -T) TESTPREP_ARG="$2"; shift 2 ;;
     --nvcre-namespace) NVCRE_NAMESPACE="$2"; shift 2 ;;
     --nvcre-airgapped) NVCRE_AIRGAPPED="y"; NVCRE_AIRGAPPED_SET="y"; shift ;;
@@ -411,7 +483,8 @@ resolve_print_flags_from_arg() {
   done
 }
 
-# resolve_generate_flags_from_arg <csv> -- sets GEN_NNCP
+# resolve_generate_flags_from_arg <csv> -- sets GEN_NNCP/GEN_NVDRIVER/
+# GEN_NICNODEPOLICY/GEN_MACVLAN/GEN_NICCONFIG_BE/GEN_NICCONFIG_ST
 resolve_generate_flags_from_arg() {
   local csv="$1" cleaned items item
   cleaned="$(echo "${csv}" | tr -d ' ')"
@@ -419,7 +492,15 @@ resolve_generate_flags_from_arg() {
   for item in "${items[@]}"; do
     case "$(echo "${item}" | tr '[:upper:]' '[:lower:]')" in
       "") : ;;
-      nncp|all|both) GEN_NNCP="y" ;;
+      nncp) GEN_NNCP="y" ;;
+      nvdriver) GEN_NVDRIVER="y" ;;
+      nicnodepolicy) GEN_NICNODEPOLICY="y" ;;
+      macvlan) GEN_MACVLAN="y" ;;
+      nicconfig-be) GEN_NICCONFIG_BE="y" ;;
+      nicconfig-st) GEN_NICCONFIG_ST="y" ;;
+      all|both)
+        GEN_NNCP="y"; GEN_NVDRIVER="y"; GEN_NICNODEPOLICY="y"
+        GEN_MACVLAN="y"; GEN_NICCONFIG_BE="y"; GEN_NICCONFIG_ST="y" ;;
       *) echo "WARNING: unknown -g code '${item}', ignoring." >&2 ;;
     esac
   done
@@ -429,11 +510,40 @@ resolve_generate_flags_from_arg() {
 # YAML-writing functions
 # ---------------------------------------------------------------------------
 
-# generate_nncp_yaml <output_dir> <mtu> <node> <iface> [<iface> ...]
-# Writes one NodeNetworkConfigurationPolicy (nmstate.io/v1) per interface,
-# named "<node>-<iface>-mtu<mtu>" (ethernet, up).
+# render_template <template_file> <output_file> NAME=VALUE [NAME=VALUE ...]
+# Minimal {% NAME %} substitution via bash's own ${var//pattern/replacement}
+# (no sed/awk subprocess) so VALUE may safely contain embedded newlines (used
+# for multi-line list bodies like pciAddressList).
+render_template() {
+  local template="$1" outfile="$2"; shift 2
+  local content pair name value token
+  content="$(cat "${template}")"
+  for pair in "$@"; do
+    name="${pair%%=*}"
+    value="${pair#*=}"
+    token="{% ${name} %}"
+    content="${content//${token}/${value}}"
+  done
+  printf '%s\n' "${content}" > "${outfile}"
+}
+
+# check_template <gen_flag> <template_path> <label> -- aborts if the artifact
+# was requested (<gen_flag> = y) but its template file doesn't exist.
+check_template() {
+  local flag="$1" path="$2" label="$3"
+  if [ "${flag}" = "y" ] && [ ! -f "${path}" ]; then
+    echo "ERROR: ${label} template not found: ${path}" >&2
+    echo "(pass the matching --*-template flag to point at a different one)" >&2
+    exit 1
+  fi
+}
+
+# generate_nncp_yaml <template_file> <output_dir> <mtu> <node> <iface> [<iface> ...]
+# Renders Templates/nmstate/interface.yaml (placeholders {% nodeName %},
+# {% interfaceName %}, {% mtu %}) once per interface, writing
+# "<node>-<iface>-mtu<mtu>.yaml" into <output_dir>.
 generate_nncp_yaml() {
-  local outdir="$1" mtu="$2" node="$3"; shift 3
+  local template="$1" outdir="$2" mtu="$3" node="$4"; shift 4
   local iface name file
   mkdir -p "${outdir}"
   for iface in "$@"; do
@@ -442,24 +552,92 @@ generate_nncp_yaml() {
     fi
     name="${node}-${iface}-mtu${mtu}"
     file="${outdir}/${name}.yaml"
-    cat > "${file}" <<EOF
-# Use this YAML as Template
-apiVersion: nmstate.io/v1
-kind: NodeNetworkConfigurationPolicy
-metadata:
-  name: ${name}
-spec:
-  desiredState:
-    interfaces:
-      - mtu: ${mtu}
-        name: ${iface}
-        state: up
-        type: ethernet
-  nodeSelector:
-    kubernetes.io/hostname: ${node}
-EOF
+    render_template "${template}" "${file}" "nodeName=${node}" "interfaceName=${iface}" "mtu=${mtu}"
     echo "Wrote ${file}"
   done
+}
+
+# generate_nvdriver_yaml <template_file> <output_dir> <node>
+# Renders Templates/gpu-operator/nvidiadriver.yaml once per node, writing
+# "gpu-driver-<node>.yaml" into <output_dir>.
+generate_nvdriver_yaml() {
+  local template="$1" outdir="$2" node="$3"
+  local file="${outdir}/gpu-driver-${node}.yaml"
+  mkdir -p "${outdir}"
+  render_template "${template}" "${file}" "nodeName=${node}"
+  echo "Wrote ${file}"
+}
+
+# generate_nicnodepolicy_yaml <template_file> <output_dir> <node> <iface> [<iface> ...]
+# Renders Templates/network-operator/nicnodepolicy.yaml once per node, writing
+# "<node>-nic-node-policy.yaml" into <output_dir>. <iface...> become the
+# rdmaSharedDevicePlugin ifNames list.
+generate_nicnodepolicy_yaml() {
+  local template="$1" outdir="$2" node="$3"; shift 3
+  local iface joined="" file
+  for iface in "$@"; do
+    if [ -z "${iface}" ] || [ "${iface}" = "-" ]; then
+      continue
+    fi
+    if [ -z "${joined}" ]; then
+      joined="\"${iface}\""
+    else
+      joined="${joined}, \"${iface}\""
+    fi
+  done
+  file="${outdir}/${node}-nic-node-policy.yaml"
+  mkdir -p "${outdir}"
+  render_template "${template}" "${file}" "nodeName=${node}" "rdmaIfNames=${joined}"
+  echo "Wrote ${file}"
+}
+
+# generate_macvlan_yaml <template_file> <output_dir> <mtu> <iface> [<iface> ...]
+# Renders Templates/network-operator/macvlan.yaml once per unique interface
+# (not per node), writing "be-mac-vlan-network-<iface>.yaml" into <output_dir>.
+generate_macvlan_yaml() {
+  local template="$1" outdir="$2" mtu="$3"; shift 3
+  local iface file
+  mkdir -p "${outdir}"
+  for iface in "$@"; do
+    if [ -z "${iface}" ] || [ "${iface}" = "-" ]; then
+      continue
+    fi
+    file="${outdir}/be-mac-vlan-network-${iface}.yaml"
+    render_template "${template}" "${file}" "interfaceName=${iface}" "mtu=${mtu}"
+    echo "Wrote ${file}"
+  done
+}
+
+# generate_nicconfig_yaml <be|st> <template_file> <output_dir> <node> <pcie> [<pcie> ...]
+# Renders a NicConfigurationTemplate once per node, writing
+# "<node>-nicconfig-<be|st>.yaml" into <output_dir>. <pcie...> become the
+# pciAddresses list body.
+generate_nicconfig_yaml() {
+  local role="$1" template="$2" outdir="$3" node="$4"; shift 4
+  local pcie block="" file
+  for pcie in "$@"; do
+    if [ -z "${pcie}" ] || [ "${pcie}" = "-" ]; then
+      continue
+    fi
+    block="${block}      - '${pcie}'"$'\n'
+  done
+  block="${block%$'\n'}"
+  file="${outdir}/${node}-nicconfig-${role}.yaml"
+  mkdir -p "${outdir}"
+  render_template "${template}" "${file}" "nodeName=${node}" "pciAddressList=${block}"
+  echo "Wrote ${file}"
+}
+
+# generate_singleton_yaml <template_file> <output_dir> <output_filename>
+# Copies a cluster-wide singleton (no per-node placeholders, e.g. ClusterPolicy
+# / NicClusterPolicy) verbatim into <output_dir>, overwriting any existing copy
+# so the output directory stays in sync with the template.
+generate_singleton_yaml() {
+  local template="$1" outdir="$2" filename="$3"
+  local file="${outdir}/${filename}"
+  mkdir -p "${outdir}"
+  cp -f "${template}" "${file}"
+  echo "Wrote ${file}"
 }
 
 # ---------------------------------------------------------------------------
@@ -1139,8 +1317,19 @@ PRINT_PCIE="n"; PRINT_PCIE_FAMILY="all"
 PRINT_DEVICE="n"; PRINT_DEVICE_FAMILY="all"
 PRINT_IFACE="n"; PRINT_IFACE_FAMILY="all"
 PRINT_TABLE="n"; PRINT_ALLNET="n"; PRINT_BOND="n"; PRINT_OVS="n"
-GEN_NNCP="n"
+GEN_NNCP="n"; GEN_NVDRIVER="n"; GEN_NICNODEPOLICY="n"; GEN_MACVLAN="n"
+GEN_NICCONFIG_BE="n"; GEN_NICCONFIG_ST="n"
 NNCP_FAMILY="cx8"; NNCP_MTU="9000"; NNCP_DIR="NNCP"; NNCP_CUSTOM_IFACES=""
+NNCP_TEMPLATE="${CLI_NNCP_TEMPLATE:-${NNCP_TEMPLATE_DEFAULT}}"
+GPU_DIR="GPU-Operator"; NETWORK_DIR="Network-Operator"
+NVDRIVER_TEMPLATE="${CLI_NVDRIVER_TEMPLATE:-${NVDRIVER_TEMPLATE_DEFAULT}}"
+NICNODEPOLICY_TEMPLATE="${CLI_NICNODEPOLICY_TEMPLATE:-${NICNODEPOLICY_TEMPLATE_DEFAULT}}"
+MACVLAN_TEMPLATE="${CLI_MACVLAN_TEMPLATE:-${MACVLAN_TEMPLATE_DEFAULT}}"
+NICCONFIG_BE_TEMPLATE="${CLI_NICCONFIG_BE_TEMPLATE:-${NICCONFIG_BE_TEMPLATE_DEFAULT}}"
+NICCONFIG_ST_TEMPLATE="${CLI_NICCONFIG_ST_TEMPLATE:-${NICCONFIG_ST_TEMPLATE_DEFAULT}}"
+NICCONFIG_BE_FAMILY="${CLI_NICCONFIG_BE_FAMILY}"; NICCONFIG_ST_FAMILY="${CLI_NICCONFIG_ST_FAMILY}"
+CLUSTERPOLICY_TEMPLATE="${CLI_CLUSTERPOLICY_TEMPLATE:-${CLUSTERPOLICY_TEMPLATE_DEFAULT}}"
+NICCLUSTERPOLICY_TEMPLATE="${CLI_NICCLUSTERPOLICY_TEMPLATE:-${NICCLUSTERPOLICY_TEMPLATE_DEFAULT}}"
 
 if [ "${CLI_MODE_ACTIVE}" = "y" ]; then
   # -------------------------------------------------------------------------
@@ -1166,6 +1355,7 @@ if [ "${CLI_MODE_ACTIVE}" = "y" ]; then
     NNCP_FAMILY="${CLI_FAMILY}"
   fi
   NNCP_MTU="${CLI_MTU}"; NNCP_DIR="${CLI_NNCP_DIR}"
+  GPU_DIR="${CLI_GPU_DIR}"; NETWORK_DIR="${CLI_NETWORK_DIR}"
 else
   # -------------------------------------------------------------------------
   # Interactive wizard: nodes first, then the Print/Generate menu.
@@ -1276,25 +1466,57 @@ else
   fi
 
   if [ "${ACTION_GENERATE}" = "y" ]; then
-    GEN_NNCP="y"
-    step_title "NNCP options"
-    ask_single_choice "NNCP: which interfaces should be included?" 1 \
-      "ConnectX-8 RDMA interfaces (auto-detected)" \
-      "ConnectX-7 RDMA interfaces (auto-detected, excludes BlueField)" \
-      "BlueField RDMA interfaces (auto-detected, e.g. BlueField-3/ConnectX-7)" \
-      "All RDMA interfaces, any adapter (auto-detected)" \
-      "Custom list (enter interface names manually)"
-    case "${SINGLE_CHOICE_INDEX}" in
-      1) NNCP_FAMILY="cx8" ;;
-      2) NNCP_FAMILY="cx7" ;;
-      3) NNCP_FAMILY="bf" ;;
-      4) NNCP_FAMILY="all" ;;
-      5) NNCP_FAMILY="custom"
-         ask_value "NNCP: enter interface names (space separated, applied per-node)" ""
-         NNCP_CUSTOM_IFACES="${VALUE_RESULT}" ;;
-    esac
-    ask_value "NNCP: MTU" "9000"; NNCP_MTU="${VALUE_RESULT}"
-    ask_value "NNCP: output directory" "NNCP"; NNCP_DIR="${VALUE_RESULT}"
+    step_title "Generate: which artifacts?"
+    ask_multi_choice "Select artifact(s) to generate:" \
+      "NodeNetworkConfigurationPolicy (NNCP) YAMLs" \
+      "NVIDIADriver YAMLs (GPU Operator, per node)" \
+      "NicNodePolicy YAMLs (Network Operator, per node)" \
+      "MacvlanNetwork YAMLs (Network Operator, per unique interface)" \
+      "NicConfigurationTemplate -- backend (be, per node)" \
+      "NicConfigurationTemplate -- storage (st, per node)" \
+      "Everything above"
+    if multi_has 7; then
+      GEN_NNCP="y"; GEN_NVDRIVER="y"; GEN_NICNODEPOLICY="y"
+      GEN_MACVLAN="y"; GEN_NICCONFIG_BE="y"; GEN_NICCONFIG_ST="y"
+    else
+      multi_has 1 && GEN_NNCP="y"
+      multi_has 2 && GEN_NVDRIVER="y"
+      multi_has 3 && GEN_NICNODEPOLICY="y"
+      multi_has 4 && GEN_MACVLAN="y"
+      multi_has 5 && GEN_NICCONFIG_BE="y"
+      multi_has 6 && GEN_NICCONFIG_ST="y"
+    fi
+
+    if [ "${GEN_NNCP}" = "y" ] || [ "${GEN_MACVLAN}" = "y" ] || [ "${GEN_NICNODEPOLICY}" = "y" ]; then
+      step_title "RDMA interface selection (used by NNCP / Macvlan / NicNodePolicy)"
+      ask_single_choice "Which interfaces should be included?" 1 \
+        "ConnectX-8 RDMA interfaces (auto-detected)" \
+        "ConnectX-7 RDMA interfaces (auto-detected, excludes BlueField)" \
+        "BlueField RDMA interfaces (auto-detected, e.g. BlueField-3/ConnectX-7)" \
+        "All RDMA interfaces, any adapter (auto-detected)" \
+        "Custom list (enter interface names manually)"
+      case "${SINGLE_CHOICE_INDEX}" in
+        1) NNCP_FAMILY="cx8" ;;
+        2) NNCP_FAMILY="cx7" ;;
+        3) NNCP_FAMILY="bf" ;;
+        4) NNCP_FAMILY="all" ;;
+        5) NNCP_FAMILY="custom"
+           ask_value "Enter interface names (space separated, applied per-node)" ""
+           NNCP_CUSTOM_IFACES="${VALUE_RESULT}" ;;
+      esac
+    fi
+    if [ "${GEN_NNCP}" = "y" ] || [ "${GEN_MACVLAN}" = "y" ]; then
+      ask_value "MTU" "9000"; NNCP_MTU="${VALUE_RESULT}"
+    fi
+    if [ "${GEN_NNCP}" = "y" ]; then
+      ask_value "NNCP: output directory" "NNCP"; NNCP_DIR="${VALUE_RESULT}"
+    fi
+    if [ "${GEN_NVDRIVER}" = "y" ]; then
+      ask_value "GPU Operator: output directory" "${GPU_DIR}"; GPU_DIR="${VALUE_RESULT}"
+    fi
+    if [ "${GEN_NICNODEPOLICY}" = "y" ] || [ "${GEN_MACVLAN}" = "y" ] || [ "${GEN_NICCONFIG_BE}" = "y" ] || [ "${GEN_NICCONFIG_ST}" = "y" ]; then
+      ask_value "Network Operator: output directory" "${NETWORK_DIR}"; NETWORK_DIR="${VALUE_RESULT}"
+    fi
   fi
 
   step_title "Summary"
@@ -1307,14 +1529,51 @@ else
   [ "${PRINT_ALLNET}" = "y" ] && echo "  - All host network interfaces"
   [ "${PRINT_BOND}" = "y" ] && echo "  - Bond membership"
   [ "${PRINT_OVS}" = "y" ] && echo "  - br-ex port membership"
-  echo "Generate NNCP     : ${GEN_NNCP}"
-  [ "${GEN_NNCP}" = "y" ] && echo "  - family=${NNCP_FAMILY} mtu=${NNCP_MTU} dir=${NNCP_DIR}"
+  echo "Generate NNCP           : ${GEN_NNCP}"
+  [ "${GEN_NNCP}" = "y" ] && echo "  - family=${NNCP_FAMILY} mtu=${NNCP_MTU} dir=${NNCP_DIR} template=${NNCP_TEMPLATE}"
+  echo "Generate NVIDIADriver   : ${GEN_NVDRIVER}"
+  [ "${GEN_NVDRIVER}" = "y" ] && echo "  - dir=${GPU_DIR} template=${NVDRIVER_TEMPLATE}"
+  echo "Generate NicNodePolicy  : ${GEN_NICNODEPOLICY}"
+  [ "${GEN_NICNODEPOLICY}" = "y" ] && echo "  - family=${NNCP_FAMILY} dir=${NETWORK_DIR} template=${NICNODEPOLICY_TEMPLATE}"
+  echo "Generate Macvlan        : ${GEN_MACVLAN}"
+  [ "${GEN_MACVLAN}" = "y" ] && echo "  - family=${NNCP_FAMILY} mtu=${NNCP_MTU} dir=${NETWORK_DIR} template=${MACVLAN_TEMPLATE}"
+  echo "Generate NicConfig(be)  : ${GEN_NICCONFIG_BE}"
+  [ "${GEN_NICCONFIG_BE}" = "y" ] && echo "  - family=${NICCONFIG_BE_FAMILY} dir=${NETWORK_DIR} template=${NICCONFIG_BE_TEMPLATE}"
+  echo "Generate NicConfig(st)  : ${GEN_NICCONFIG_ST}"
+  [ "${GEN_NICCONFIG_ST}" = "y" ] && echo "  - family=${NICCONFIG_ST_FAMILY} dir=${NETWORK_DIR} template=${NICCONFIG_ST_TEMPLATE}"
   echo
   ask_yesno "Proceed with the above?" "y"
   if [ "${YESNO_RESULT}" = "n" ]; then
     echo "Aborted."
     exit 0
   fi
+fi
+
+check_template "${GEN_NNCP}" "${NNCP_TEMPLATE}" "NNCP"
+check_template "${GEN_NVDRIVER}" "${NVDRIVER_TEMPLATE}" "NVIDIADriver"
+check_template "${GEN_NICNODEPOLICY}" "${NICNODEPOLICY_TEMPLATE}" "NicNodePolicy"
+check_template "${GEN_MACVLAN}" "${MACVLAN_TEMPLATE}" "MacvlanNetwork"
+check_template "${GEN_NICCONFIG_BE}" "${NICCONFIG_BE_TEMPLATE}" "NicConfigurationTemplate (be)"
+check_template "${GEN_NICCONFIG_ST}" "${NICCONFIG_ST_TEMPLATE}" "NicConfigurationTemplate (st)"
+
+# Any gpu-operator / network-operator artifact pulls its operator's
+# cluster-wide singleton (ClusterPolicy / NicClusterPolicy) along with it.
+NEED_NETWORK_SINGLETON="n"
+if [ "${GEN_NICNODEPOLICY}" = "y" ] || [ "${GEN_MACVLAN}" = "y" ] || [ "${GEN_NICCONFIG_BE}" = "y" ] || [ "${GEN_NICCONFIG_ST}" = "y" ]; then
+  NEED_NETWORK_SINGLETON="y"
+fi
+check_template "${GEN_NVDRIVER}" "${CLUSTERPOLICY_TEMPLATE}" "ClusterPolicy"
+check_template "${NEED_NETWORK_SINGLETON}" "${NICCLUSTERPOLICY_TEMPLATE}" "NicClusterPolicy"
+
+if [ "${GEN_NVDRIVER}" = "y" ]; then
+  echo
+  echo "--- ClusterPolicy (GPU Operator singleton) ---"
+  generate_singleton_yaml "${CLUSTERPOLICY_TEMPLATE}" "${GPU_DIR}" "clusterpolicy.yaml"
+fi
+if [ "${NEED_NETWORK_SINGLETON}" = "y" ]; then
+  echo
+  echo "--- NicClusterPolicy (Network Operator singleton) ---"
+  generate_singleton_yaml "${NICCLUSTERPOLICY_TEMPLATE}" "${NETWORK_DIR}" "nicclusterpolicy.yaml"
 fi
 
 # ---------------------------------------------------------------------------
@@ -1423,6 +1682,7 @@ family_values() {
   eval "FAMVALS=(\"\${${src}[@]}\")"
 }
 
+MACVLAN_IFACES=()
 for node in "${NODES[@]}"; do
   echo
   echo "################################################################"
@@ -1515,12 +1775,88 @@ for node in "${NODES[@]}"; do
       *) nncp_ifaces=() ;;
     esac
     if [ "${#nncp_ifaces[@]}" -gt 0 ]; then
-      generate_nncp_yaml "${NNCP_DIR}" "${NNCP_MTU}" "${node}" "${nncp_ifaces[@]}"
+      generate_nncp_yaml "${NNCP_TEMPLATE}" "${NNCP_DIR}" "${NNCP_MTU}" "${node}" "${nncp_ifaces[@]}"
     else
       echo "(no matching interfaces for ${node}, nothing generated)"
     fi
   fi
+
+  # --- NVIDIADriver generation (per node) ---
+  if [ "${GEN_NVDRIVER}" = "y" ]; then
+    echo
+    echo "--- NVIDIADriver generation (${node}) ---"
+    generate_nvdriver_yaml "${NVDRIVER_TEMPLATE}" "${GPU_DIR}" "${node}"
+  fi
+
+  # --- NicNodePolicy generation (per node) ---
+  if [ "${GEN_NICNODEPOLICY}" = "y" ]; then
+    echo
+    echo "--- NicNodePolicy generation (${node}) ---"
+    case "${NNCP_FAMILY}" in
+      cx8) policy_ifaces=("${cx8_ifaces[@]}") ;;
+      cx7) policy_ifaces=("${cx7_ifaces[@]}") ;;
+      bf) policy_ifaces=("${bf_ifaces[@]}") ;;
+      all) policy_ifaces=("${all_ifaces[@]}") ;;
+      custom) read -r -a policy_ifaces <<< "${NNCP_CUSTOM_IFACES}" ;;
+      *) policy_ifaces=() ;;
+    esac
+    if [ "${#policy_ifaces[@]}" -gt 0 ]; then
+      generate_nicnodepolicy_yaml "${NICNODEPOLICY_TEMPLATE}" "${NETWORK_DIR}" "${node}" "${policy_ifaces[@]}"
+    else
+      echo "(no matching interfaces for ${node}, nothing generated)"
+    fi
+  fi
+
+  # --- Macvlan interface accumulation (one YAML per unique iface, written
+  # after the node loop finishes -- not per node) ---
+  if [ "${GEN_MACVLAN}" = "y" ]; then
+    case "${NNCP_FAMILY}" in
+      cx8) macvlan_src=("${cx8_ifaces[@]}") ;;
+      cx7) macvlan_src=("${cx7_ifaces[@]}") ;;
+      bf) macvlan_src=("${bf_ifaces[@]}") ;;
+      all) macvlan_src=("${all_ifaces[@]}") ;;
+      custom) read -r -a macvlan_src <<< "${NNCP_CUSTOM_IFACES}" ;;
+      *) macvlan_src=() ;;
+    esac
+    for mv_iface in "${macvlan_src[@]}"; do
+      dedup_append MACVLAN_IFACES "${mv_iface}"
+    done
+  fi
+
+  # --- NicConfigurationTemplate (backend) generation (per node) ---
+  if [ "${GEN_NICCONFIG_BE}" = "y" ]; then
+    echo
+    echo "--- NicConfig (backend) generation (${node}) ---"
+    family_values pcies "${NICCONFIG_BE_FAMILY}"
+    if [ "${#FAMVALS[@]}" -gt 0 ]; then
+      generate_nicconfig_yaml be "${NICCONFIG_BE_TEMPLATE}" "${NETWORK_DIR}" "${node}" "${FAMVALS[@]}"
+    else
+      echo "(no ${NICCONFIG_BE_FAMILY}-family PCIe addresses for ${node}, nothing generated)"
+    fi
+  fi
+
+  # --- NicConfigurationTemplate (storage) generation (per node) ---
+  if [ "${GEN_NICCONFIG_ST}" = "y" ]; then
+    echo
+    echo "--- NicConfig (storage) generation (${node}) ---"
+    family_values pcies "${NICCONFIG_ST_FAMILY}"
+    if [ "${#FAMVALS[@]}" -gt 0 ]; then
+      generate_nicconfig_yaml st "${NICCONFIG_ST_TEMPLATE}" "${NETWORK_DIR}" "${node}" "${FAMVALS[@]}"
+    else
+      echo "(no ${NICCONFIG_ST_FAMILY}-family PCIe addresses for ${node}, nothing generated)"
+    fi
+  fi
 done
+
+if [ "${GEN_MACVLAN}" = "y" ]; then
+  echo
+  echo "--- MacvlanNetwork generation (unique interfaces across selected nodes) ---"
+  if [ "${#MACVLAN_IFACES[@]}" -gt 0 ]; then
+    generate_macvlan_yaml "${MACVLAN_TEMPLATE}" "${NETWORK_DIR}" "${NNCP_MTU}" "${MACVLAN_IFACES[@]}"
+  else
+    echo "(no matching interfaces found across selected nodes, nothing generated)"
+  fi
+fi
 
 echo
 echo "Done."

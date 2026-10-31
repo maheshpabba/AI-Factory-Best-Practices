@@ -80,6 +80,18 @@ param(
   [string]$Ifaces = "",
   [string]$Mtu = "9000",
   [string]$NncpDir = "NNCP",
+  [string]$NncpTemplate = "",
+  [string]$GpuDir = "GPU-Operator",
+  [string]$NetworkDir = "Network-Operator",
+  [string]$NvdriverTemplate = "",
+  [string]$NicNodePolicyTemplate = "",
+  [string]$MacvlanTemplate = "",
+  [string]$NicConfigBeTemplate = "",
+  [string]$NicConfigStTemplate = "",
+  [string]$NicConfigBeFamily = "cx8",
+  [string]$NicConfigStFamily = "bf",
+  [string]$ClusterPolicyTemplate = "",
+  [string]$NicClusterPolicyTemplate = "",
   [string]$TestPrep = "",
   [string]$NvcreNamespace = "default",
   [switch]$NvcreAirgapped,
@@ -126,13 +138,52 @@ NON-INTERACTIVE MODE (any of -Nodes/-Roles/-Print/-Generate given -> runs silent
                     all = no filter.
                     e.g. -Print device:cx8,pcie:bf,iface:cx7,table,bond
   -Generate <codes> Comma-separated artifact codes to generate:
-                      nncp        NodeNetworkConfigurationPolicy YAMLs
+                      nncp            NodeNetworkConfigurationPolicy YAMLs
+                      nvdriver        NVIDIADriver YAMLs (GPU Operator, per node)
+                      nicnodepolicy   NicNodePolicy YAMLs (Network Operator, per node)
+                      macvlan         MacvlanNetwork YAMLs (Network Operator, one
+                                      per unique interface, not per node)
+                      nicconfig-be    NicConfigurationTemplate -- backend (per node)
+                      nicconfig-st    NicConfigurationTemplate -- storage (per node)
+                      all             Everything above
+                    Generating any gpu-operator code (nvdriver) also copies the
+                    cluster-wide ClusterPolicy singleton into -GpuDir; generating
+                    any network-operator code (nicnodepolicy/macvlan/nicconfig-be/
+                    nicconfig-st) also copies the NicClusterPolicy singleton into
+                    -NetworkDir -- so the output directory has everything that
+                    operator needs (handy for GitOps/ArgoCD). Existing files are
+                    overwritten so the copy stays in sync with the template.
 
   Tuning parameters for -Generate (all optional):
-  -Family <cx8|cx7|all>   Which interfaces to use (default: cx8)
+  -Family <cx8|cx7|all>   Which interfaces to use for nncp/macvlan/
+                          nicnodepolicy (default: cx8)
   -Ifaces "<names>"       Custom space/comma separated interface list (overrides -Family)
-  -Mtu <n>                MTU (default: 9000)
+  -Mtu <n>                MTU, used by nncp and macvlan (default: 9000)
   -NncpDir <dir>          NNCP output directory (default: NNCP)
+  -NncpTemplate <file>    NNCP Jinja-style template (default:
+                          Templates/nmstate/interface.yaml next to this script)
+  -GpuDir <dir>               nvdriver output directory (default: GPU-Operator)
+  -NetworkDir <dir>           nicnodepolicy/macvlan/nicconfig-be/nicconfig-st
+                              output directory (default: Network-Operator)
+  -NvdriverTemplate <file>       Template (default:
+                                 Templates/gpu-operator/nvidiadriver.yaml)
+  -NicNodePolicyTemplate <file>  Template (default:
+                                 Templates/network-operator/nicnodepolicy.yaml)
+  -MacvlanTemplate <file>        Template (default:
+                                 Templates/network-operator/macvlan.yaml)
+  -NicConfigBeTemplate <file>    Template (default:
+                                 Templates/network-operator/nicconfig-be.yaml)
+  -NicConfigStTemplate <file>    Template (default:
+                                 Templates/network-operator/nicconfig-st.yaml)
+  -NicConfigBeFamily <cx8|cx7|bf|all>   PCIe source family for nicconfig-be
+                                        (default: cx8)
+  -NicConfigStFamily <cx8|cx7|bf|all>   PCIe source family for nicconfig-st
+                                        (default: bf -- storage NICs on this
+                                        fleet are BlueField-3/ConnectX-7)
+  -ClusterPolicyTemplate <file>      Template (default:
+                                     Templates/gpu-operator/clusterpolicy.yaml)
+  -NicClusterPolicyTemplate <file>   Template (default:
+                                     Templates/network-operator/nicclusterpolicy.yaml)
 
   -TestPrep <mode>  Nvidia Cluster Readiness test prepare/check. Runs standalone
                     (ignores -Nodes/-Roles/-Print/-Generate). Installs (or removes)
@@ -176,6 +227,8 @@ Examples:
   ./cluster-utility.ps1 -Nodes all -Print pcie:cx8,device:cx8
   ./cluster-utility.ps1 -Roles gpuworker880 -Print iface:bf,table
   ./cluster-utility.ps1 -Nodes worker3,worker4 -Print all -Generate nncp -Family cx8
+  ./cluster-utility.ps1 -Nodes worker3,worker4 -Generate all
+  ./cluster-utility.ps1 -Roles gpuworker880 -Generate nvdriver,nicnodepolicy,macvlan,nicconfig-be,nicconfig-st
   ./cluster-utility.ps1 -TestPrep prepare -NvcreNamespace default
   ./cluster-utility.ps1 -TestPrep cleanup -NvcreNamespace default
 "@ | Write-Host
@@ -383,8 +436,19 @@ function Resolve-GenerateFlagsFromArg([string]$Csv) {
   foreach ($item in $items) {
     switch ($item) {
       "nncp" { $script:GenNncp = $true }
-      "all" { $script:GenNncp = $true }
-      "both" { $script:GenNncp = $true }
+      "nvdriver" { $script:GenNvdriver = $true }
+      "nicnodepolicy" { $script:GenNicNodePolicy = $true }
+      "macvlan" { $script:GenMacvlan = $true }
+      "nicconfig-be" { $script:GenNicConfigBe = $true }
+      "nicconfig-st" { $script:GenNicConfigSt = $true }
+      "all" {
+        $script:GenNncp = $true; $script:GenNvdriver = $true; $script:GenNicNodePolicy = $true
+        $script:GenMacvlan = $true; $script:GenNicConfigBe = $true; $script:GenNicConfigSt = $true
+      }
+      "both" {
+        $script:GenNncp = $true; $script:GenNvdriver = $true; $script:GenNicNodePolicy = $true
+        $script:GenMacvlan = $true; $script:GenNicConfigBe = $true; $script:GenNicConfigSt = $true
+      }
       default { Write-Warning "unknown -Generate code '$item', ignoring." }
     }
   }
@@ -394,34 +458,106 @@ function Resolve-GenerateFlagsFromArg([string]$Csv) {
 # YAML-writing functions
 # ---------------------------------------------------------------------------
 
-# New-NncpYaml <outputDir> <mtu> <node> <iface[]>
-# Writes one NodeNetworkConfigurationPolicy (nmstate.io/v1) per interface,
-# named "<node>-<iface>-mtu<mtu>" (ethernet, up).
-function New-NncpYaml([string]$OutDir, [string]$NncpMtu, [string]$Node, [string[]]$IfaceList) {
+# Expand-Template <templateFile> <outputFile> <hashtable of NAME=VALUE>
+# Minimal {% NAME %} substitution. Values may contain embedded newlines (used
+# for multi-line list bodies like pciAddressList) -- .Replace() handles this
+# natively in .NET strings.
+function Expand-Template([string]$TemplateFile, [string]$OutFile, [hashtable]$Vars) {
+  $content = Get-Content -Path $TemplateFile -Raw
+  foreach ($name in $Vars.Keys) {
+    $content = $content.Replace("{% $name %}", $Vars[$name])
+  }
+  Set-Content -Path $OutFile -Value $content -NoNewline:$false
+}
+
+# Test-TemplateExists <genFlag> <path> <label> -- aborts if the artifact was
+# requested (genFlag = $true) but its template file doesn't exist.
+function Test-TemplateExists([bool]$GenFlag, [string]$Path, [string]$Label) {
+  if ($GenFlag -and -not (Test-Path $Path -PathType Leaf)) {
+    Write-Error "$Label template not found: $Path (pass the matching -*Template parameter to point at a different one)"
+    exit 1
+  }
+}
+
+# New-NncpYaml <templateFile> <outputDir> <mtu> <node> <iface[]>
+# Renders Templates/nmstate/interface.yaml (placeholders {% nodeName %},
+# {% interfaceName %}, {% mtu %}) once per interface, writing
+# "<node>-<iface>-mtu<mtu>.yaml" into <outputDir>.
+function New-NncpYaml([string]$TemplateFile, [string]$OutDir, [string]$NncpMtu, [string]$Node, [string[]]$IfaceList) {
   New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
   foreach ($iface in $IfaceList) {
     if ([string]::IsNullOrWhiteSpace($iface) -or $iface -eq "-") { continue }
     $name = "$Node-$iface-mtu$NncpMtu"
     $file = Join-Path $OutDir "$name.yaml"
-    $content = @"
-# Use this YAML as Template
-apiVersion: nmstate.io/v1
-kind: NodeNetworkConfigurationPolicy
-metadata:
-  name: $name
-spec:
-  desiredState:
-    interfaces:
-      - mtu: $NncpMtu
-        name: $iface
-        state: up
-        type: ethernet
-  nodeSelector:
-    kubernetes.io/hostname: $Node
-"@
-    Set-Content -Path $file -Value $content -NoNewline:$false
+    Expand-Template $TemplateFile $file @{ nodeName = $Node; interfaceName = $iface; mtu = $NncpMtu }
     Write-Host "Wrote $file"
   }
+}
+
+# New-NvdriverYaml <templateFile> <outputDir> <node>
+# Renders Templates/gpu-operator/nvidiadriver.yaml once per node, writing
+# "gpu-driver-<node>.yaml" into <outputDir>.
+function New-NvdriverYaml([string]$TemplateFile, [string]$OutDir, [string]$Node) {
+  New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+  $file = Join-Path $OutDir "gpu-driver-$Node.yaml"
+  Expand-Template $TemplateFile $file @{ nodeName = $Node }
+  Write-Host "Wrote $file"
+}
+
+# New-NicNodePolicyYaml <templateFile> <outputDir> <node> <iface[]>
+# Renders Templates/network-operator/nicnodepolicy.yaml once per node,
+# writing "<node>-nic-node-policy.yaml" into <outputDir>. <iface[]> become
+# the rdmaSharedDevicePlugin ifNames list.
+function New-NicNodePolicyYaml([string]$TemplateFile, [string]$OutDir, [string]$Node, [string[]]$IfaceList) {
+  $quoted = @()
+  foreach ($iface in $IfaceList) {
+    if ([string]::IsNullOrWhiteSpace($iface) -or $iface -eq "-") { continue }
+    $quoted += "`"$iface`""
+  }
+  New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+  $file = Join-Path $OutDir "$Node-nic-node-policy.yaml"
+  Expand-Template $TemplateFile $file @{ nodeName = $Node; rdmaIfNames = ($quoted -join ", ") }
+  Write-Host "Wrote $file"
+}
+
+# New-MacvlanYaml <templateFile> <outputDir> <mtu> <iface[]>
+# Renders Templates/network-operator/macvlan.yaml once per unique interface
+# (not per node), writing "be-mac-vlan-network-<iface>.yaml" into <outputDir>.
+function New-MacvlanYaml([string]$TemplateFile, [string]$OutDir, [string]$NncpMtu, [string[]]$IfaceList) {
+  New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+  foreach ($iface in $IfaceList) {
+    if ([string]::IsNullOrWhiteSpace($iface) -or $iface -eq "-") { continue }
+    $file = Join-Path $OutDir "be-mac-vlan-network-$iface.yaml"
+    Expand-Template $TemplateFile $file @{ interfaceName = $iface; mtu = $NncpMtu }
+    Write-Host "Wrote $file"
+  }
+}
+
+# New-NicConfigYaml <be|st> <templateFile> <outputDir> <node> <pcie[]>
+# Renders a NicConfigurationTemplate once per node, writing
+# "<node>-nicconfig-<be|st>.yaml" into <outputDir>. <pcie[]> become the
+# pciAddresses list body.
+function New-NicConfigYaml([string]$Role, [string]$TemplateFile, [string]$OutDir, [string]$Node, [string[]]$PcieList) {
+  $lines = @()
+  foreach ($pcie in $PcieList) {
+    if ([string]::IsNullOrWhiteSpace($pcie) -or $pcie -eq "-") { continue }
+    $lines += "      - '$pcie'"
+  }
+  New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+  $file = Join-Path $OutDir "$Node-nicconfig-$Role.yaml"
+  Expand-Template $TemplateFile $file @{ nodeName = $Node; pciAddressList = ($lines -join "`n") }
+  Write-Host "Wrote $file"
+}
+
+# New-SingletonYaml <templateFile> <outputDir> <outputFileName>
+# Copies a cluster-wide singleton (no per-node placeholders, e.g. ClusterPolicy
+# / NicClusterPolicy) verbatim into <outputDir>, overwriting any existing copy
+# so the output directory stays in sync with the template.
+function New-SingletonYaml([string]$TemplateFile, [string]$OutDir, [string]$FileName) {
+  New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+  $file = Join-Path $OutDir $FileName
+  Copy-Item -Path $TemplateFile -Destination $file -Force
+  Write-Host "Wrote $file"
 }
 
 # ---------------------------------------------------------------------------
@@ -1091,8 +1227,32 @@ $PrintDevice = $false; $PrintDeviceFamily = "all"
 $PrintPcie = $false; $PrintPcieFamily = "all"
 $PrintIface = $false; $PrintIfaceFamily = "all"
 $PrintTable = $false; $PrintAllNet = $false; $PrintBond = $false; $PrintOvs = $false
-$GenNncp = $false
+$GenNncp = $false; $GenNvdriver = $false; $GenNicNodePolicy = $false; $GenMacvlan = $false
+$GenNicConfigBe = $false; $GenNicConfigSt = $false
 $NncpFamily = "cx8"; $NncpMtu = "9000"; $NncpDirVal = "NNCP"; $NncpCustomIfaces = ""
+# Default artifact templates, resolved relative to this script's location so
+# the tool works regardless of the caller's cwd (override with the matching
+# -*Template parameter).
+$NncpTemplateDefault = Join-Path $PSScriptRoot "../Templates/nmstate/interface.yaml"
+$NncpTemplateVal = if ($NncpTemplate -ne "") { $NncpTemplate } else { $NncpTemplateDefault }
+$GpuDirVal = $GpuDir; $NetworkDirVal = $NetworkDir
+$NvdriverTemplateDefault = Join-Path $PSScriptRoot "../Templates/gpu-operator/nvidiadriver.yaml"
+$NvdriverTemplateVal = if ($NvdriverTemplate -ne "") { $NvdriverTemplate } else { $NvdriverTemplateDefault }
+$NicNodePolicyTemplateDefault = Join-Path $PSScriptRoot "../Templates/network-operator/nicnodepolicy.yaml"
+$NicNodePolicyTemplateVal = if ($NicNodePolicyTemplate -ne "") { $NicNodePolicyTemplate } else { $NicNodePolicyTemplateDefault }
+$MacvlanTemplateDefault = Join-Path $PSScriptRoot "../Templates/network-operator/macvlan.yaml"
+$MacvlanTemplateVal = if ($MacvlanTemplate -ne "") { $MacvlanTemplate } else { $MacvlanTemplateDefault }
+$NicConfigBeTemplateDefault = Join-Path $PSScriptRoot "../Templates/network-operator/nicconfig-be.yaml"
+$NicConfigBeTemplateVal = if ($NicConfigBeTemplate -ne "") { $NicConfigBeTemplate } else { $NicConfigBeTemplateDefault }
+$NicConfigStTemplateDefault = Join-Path $PSScriptRoot "../Templates/network-operator/nicconfig-st.yaml"
+$NicConfigStTemplateVal = if ($NicConfigStTemplate -ne "") { $NicConfigStTemplate } else { $NicConfigStTemplateDefault }
+$NicConfigBeFamilyVal = $NicConfigBeFamily; $NicConfigStFamilyVal = $NicConfigStFamily
+# Cluster-wide singletons (no per-node placeholders) -- copied verbatim
+# alongside whichever per-node artifacts of their operator get generated.
+$ClusterPolicyTemplateDefault = Join-Path $PSScriptRoot "../Templates/gpu-operator/clusterpolicy.yaml"
+$ClusterPolicyTemplateVal = if ($ClusterPolicyTemplate -ne "") { $ClusterPolicyTemplate } else { $ClusterPolicyTemplateDefault }
+$NicClusterPolicyTemplateDefault = Join-Path $PSScriptRoot "../Templates/network-operator/nicclusterpolicy.yaml"
+$NicClusterPolicyTemplateVal = if ($NicClusterPolicyTemplate -ne "") { $NicClusterPolicyTemplate } else { $NicClusterPolicyTemplateDefault }
 $ActionPrint = "n"
 
 if ($CliModeActive) {
@@ -1223,7 +1383,27 @@ if ($CliModeActive) {
   }
 
   if ($ActionGenerate -eq "y") {
-    $GenNncp = $true
+    Write-StepTitle "Generate: which artifacts?"
+    $genPicks = Ask-MultiChoice "Select artifact(s) to generate:" @(
+      "NodeNetworkConfigurationPolicy (NNCP) YAMLs",
+      "NVIDIADriver YAMLs (GPU Operator, per node)",
+      "NicNodePolicy YAMLs (Network Operator, per node)",
+      "MacvlanNetwork YAMLs (Network Operator, per unique interface)",
+      "NicConfigurationTemplate -- backend (be, per node)",
+      "NicConfigurationTemplate -- storage (st, per node)",
+      "Everything above"
+    )
+    if (Test-MultiHas $genPicks 7) {
+      $GenNncp = $true; $GenNvdriver = $true; $GenNicNodePolicy = $true
+      $GenMacvlan = $true; $GenNicConfigBe = $true; $GenNicConfigSt = $true
+    } else {
+      if (Test-MultiHas $genPicks 1) { $GenNncp = $true }
+      if (Test-MultiHas $genPicks 2) { $GenNvdriver = $true }
+      if (Test-MultiHas $genPicks 3) { $GenNicNodePolicy = $true }
+      if (Test-MultiHas $genPicks 4) { $GenMacvlan = $true }
+      if (Test-MultiHas $genPicks 5) { $GenNicConfigBe = $true }
+      if (Test-MultiHas $genPicks 6) { $GenNicConfigSt = $true }
+    }
 
     function Ask-IfaceFamily([string]$Which) {
       return Ask-SingleChoice "$Which which interfaces should be included?" 1 @(
@@ -1235,20 +1415,32 @@ if ($CliModeActive) {
       )
     }
 
-    Write-StepTitle "NNCP options"
-    $famChoice = Ask-IfaceFamily "NNCP:"
-    switch ($famChoice) {
-      1 { $NncpFamily = "cx8" }
-      2 { $NncpFamily = "cx7" }
-      3 { $NncpFamily = "bf" }
-      4 { $NncpFamily = "all" }
-      5 {
-        $NncpFamily = "custom"
-        $NncpCustomIfaces = Ask-Value "NNCP: enter interface names (space separated, applied per-node)" ""
+    if ($GenNncp -or $GenMacvlan -or $GenNicNodePolicy) {
+      Write-StepTitle "RDMA interface selection (used by NNCP / Macvlan / NicNodePolicy)"
+      $famChoice = Ask-IfaceFamily "Which interfaces:"
+      switch ($famChoice) {
+        1 { $NncpFamily = "cx8" }
+        2 { $NncpFamily = "cx7" }
+        3 { $NncpFamily = "bf" }
+        4 { $NncpFamily = "all" }
+        5 {
+          $NncpFamily = "custom"
+          $NncpCustomIfaces = Ask-Value "Enter interface names (space separated, applied per-node)" ""
+        }
       }
     }
-    $NncpMtu = Ask-Value "NNCP: MTU" "9000"
-    $NncpDirVal = Ask-Value "NNCP: output directory" "NNCP"
+    if ($GenNncp -or $GenMacvlan) {
+      $NncpMtu = Ask-Value "MTU" "9000"
+    }
+    if ($GenNncp) {
+      $NncpDirVal = Ask-Value "NNCP: output directory" "NNCP"
+    }
+    if ($GenNvdriver) {
+      $GpuDirVal = Ask-Value "GPU Operator: output directory" $GpuDirVal
+    }
+    if ($GenNicNodePolicy -or $GenMacvlan -or $GenNicConfigBe -or $GenNicConfigSt) {
+      $NetworkDirVal = Ask-Value "Network Operator: output directory" $NetworkDirVal
+    }
   }
 
   Write-StepTitle "Summary"
@@ -1261,14 +1453,48 @@ if ($CliModeActive) {
   if ($PrintAllNet) { Write-Host "  - All host network interfaces" }
   if ($PrintBond) { Write-Host "  - Bond membership" }
   if ($PrintOvs) { Write-Host "  - br-ex port membership" }
-  Write-Host "Generate NNCP     : $(if ($GenNncp) { 'y' } else { 'n' })"
-  if ($GenNncp) { Write-Host "  - family=$NncpFamily mtu=$NncpMtu dir=$NncpDirVal" }
+  Write-Host "Generate NNCP           : $(if ($GenNncp) { 'y' } else { 'n' })"
+  if ($GenNncp) { Write-Host "  - family=$NncpFamily mtu=$NncpMtu dir=$NncpDirVal template=$NncpTemplateVal" }
+  Write-Host "Generate NVIDIADriver   : $(if ($GenNvdriver) { 'y' } else { 'n' })"
+  if ($GenNvdriver) { Write-Host "  - dir=$GpuDirVal template=$NvdriverTemplateVal" }
+  Write-Host "Generate NicNodePolicy  : $(if ($GenNicNodePolicy) { 'y' } else { 'n' })"
+  if ($GenNicNodePolicy) { Write-Host "  - family=$NncpFamily dir=$NetworkDirVal template=$NicNodePolicyTemplateVal" }
+  Write-Host "Generate Macvlan        : $(if ($GenMacvlan) { 'y' } else { 'n' })"
+  if ($GenMacvlan) { Write-Host "  - family=$NncpFamily mtu=$NncpMtu dir=$NetworkDirVal template=$MacvlanTemplateVal" }
+  Write-Host "Generate NicConfig(be)  : $(if ($GenNicConfigBe) { 'y' } else { 'n' })"
+  if ($GenNicConfigBe) { Write-Host "  - family=$NicConfigBeFamilyVal dir=$NetworkDirVal template=$NicConfigBeTemplateVal" }
+  Write-Host "Generate NicConfig(st)  : $(if ($GenNicConfigSt) { 'y' } else { 'n' })"
+  if ($GenNicConfigSt) { Write-Host "  - family=$NicConfigStFamilyVal dir=$NetworkDirVal template=$NicConfigStTemplateVal" }
   Write-Host ""
   $proceed = Ask-YesNo "Proceed with the above?" "y"
   if ($proceed -eq "n") {
     Write-Host "Aborted."
     exit 0
   }
+}
+
+Test-TemplateExists $GenNncp $NncpTemplateVal "NNCP"
+Test-TemplateExists $GenNvdriver $NvdriverTemplateVal "NVIDIADriver"
+Test-TemplateExists $GenNicNodePolicy $NicNodePolicyTemplateVal "NicNodePolicy"
+Test-TemplateExists $GenMacvlan $MacvlanTemplateVal "MacvlanNetwork"
+Test-TemplateExists $GenNicConfigBe $NicConfigBeTemplateVal "NicConfigurationTemplate (be)"
+Test-TemplateExists $GenNicConfigSt $NicConfigStTemplateVal "NicConfigurationTemplate (st)"
+
+# Any gpu-operator / network-operator artifact pulls its operator's
+# cluster-wide singleton (ClusterPolicy / NicClusterPolicy) along with it.
+$NeedNetworkSingleton = $GenNicNodePolicy -or $GenMacvlan -or $GenNicConfigBe -or $GenNicConfigSt
+Test-TemplateExists $GenNvdriver $ClusterPolicyTemplateVal "ClusterPolicy"
+Test-TemplateExists $NeedNetworkSingleton $NicClusterPolicyTemplateVal "NicClusterPolicy"
+
+if ($GenNvdriver) {
+  Write-Host ""
+  Write-Host "--- ClusterPolicy (GPU Operator singleton) ---"
+  New-SingletonYaml $ClusterPolicyTemplateVal $GpuDirVal "clusterpolicy.yaml"
+}
+if ($NeedNetworkSingleton) {
+  Write-Host ""
+  Write-Host "--- NicClusterPolicy (Network Operator singleton) ---"
+  New-SingletonYaml $NicClusterPolicyTemplateVal $NetworkDirVal "nicclusterpolicy.yaml"
 }
 
 # ---------------------------------------------------------------------------
@@ -1370,6 +1596,7 @@ else
 fi
 '@
 
+$MacvlanIfaces = New-Object System.Collections.Generic.List[string]
 foreach ($node in $NodeList) {
   Write-Host ""
   Write-Host "################################################################"
@@ -1489,10 +1716,86 @@ foreach ($node in $NodeList) {
       default { @() }
     }
     if ($nncpIfaces.Count -gt 0) {
-      New-NncpYaml $NncpDirVal $NncpMtu $node $nncpIfaces
+      New-NncpYaml $NncpTemplateVal $NncpDirVal $NncpMtu $node $nncpIfaces
     } else {
       Write-Host "(no matching interfaces for $node, nothing generated)"
     }
+  }
+
+  # --- NVIDIADriver generation (per node) ---
+  if ($GenNvdriver) {
+    Write-Host ""
+    Write-Host "--- NVIDIADriver generation ($node) ---"
+    New-NvdriverYaml $NvdriverTemplateVal $GpuDirVal $node
+  }
+
+  # --- NicNodePolicy generation (per node) ---
+  if ($GenNicNodePolicy) {
+    Write-Host ""
+    Write-Host "--- NicNodePolicy generation ($node) ---"
+    $policyIfaces = switch ($NncpFamily) {
+      "cx8" { $cx8Ifaces }
+      "cx7" { $cx7Ifaces }
+      "bf" { $bfIfaces }
+      "all" { $allIfaces }
+      "custom" { @(($NncpCustomIfaces -replace ',', ' ') -split '\s+' | Where-Object { $_ -ne "" }) }
+      default { @() }
+    }
+    if ($policyIfaces.Count -gt 0) {
+      New-NicNodePolicyYaml $NicNodePolicyTemplateVal $NetworkDirVal $node $policyIfaces
+    } else {
+      Write-Host "(no matching interfaces for $node, nothing generated)"
+    }
+  }
+
+  # --- Macvlan interface accumulation (one YAML per unique iface, written
+  # after the node loop finishes -- not per node) ---
+  if ($GenMacvlan) {
+    $macvlanSrc = switch ($NncpFamily) {
+      "cx8" { $cx8Ifaces }
+      "cx7" { $cx7Ifaces }
+      "bf" { $bfIfaces }
+      "all" { $allIfaces }
+      "custom" { @(($NncpCustomIfaces -replace ',', ' ') -split '\s+' | Where-Object { $_ -ne "" }) }
+      default { @() }
+    }
+    foreach ($mvIface in $macvlanSrc) {
+      if (-not $MacvlanIfaces.Contains($mvIface)) { $MacvlanIfaces.Add($mvIface) }
+    }
+  }
+
+  # --- NicConfigurationTemplate (backend) generation (per node) ---
+  if ($GenNicConfigBe) {
+    Write-Host ""
+    Write-Host "--- NicConfig (backend) generation ($node) ---"
+    $bePcies = Get-FamilyValues 'pcies' $NicConfigBeFamilyVal
+    if ($bePcies.Count -gt 0) {
+      New-NicConfigYaml be $NicConfigBeTemplateVal $NetworkDirVal $node $bePcies
+    } else {
+      Write-Host "(no $NicConfigBeFamilyVal-family PCIe addresses for $node, nothing generated)"
+    }
+  }
+
+  # --- NicConfigurationTemplate (storage) generation (per node) ---
+  if ($GenNicConfigSt) {
+    Write-Host ""
+    Write-Host "--- NicConfig (storage) generation ($node) ---"
+    $stPcies = Get-FamilyValues 'pcies' $NicConfigStFamilyVal
+    if ($stPcies.Count -gt 0) {
+      New-NicConfigYaml st $NicConfigStTemplateVal $NetworkDirVal $node $stPcies
+    } else {
+      Write-Host "(no $NicConfigStFamilyVal-family PCIe addresses for $node, nothing generated)"
+    }
+  }
+}
+
+if ($GenMacvlan) {
+  Write-Host ""
+  Write-Host "--- MacvlanNetwork generation (unique interfaces across selected nodes) ---"
+  if ($MacvlanIfaces.Count -gt 0) {
+    New-MacvlanYaml $MacvlanTemplateVal $NetworkDirVal $NncpMtu $MacvlanIfaces
+  } else {
+    Write-Host "(no matching interfaces found across selected nodes, nothing generated)"
   }
 }
 
